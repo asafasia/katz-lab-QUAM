@@ -1,8 +1,8 @@
 {
-  "exclude": {
-    "**/.venv": false,
-    "**/venv": false,
-    "**/.gitignore": false
+  "files.exclude": {
+    "**/.venv": true,
+    "**/venv": true,
+    "**/.gitignore": true
   }
 }
 
