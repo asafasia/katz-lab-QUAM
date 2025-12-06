@@ -15,7 +15,6 @@ q10_params = qpu_config.nodes["q10"]
 machine = Quam()
 
 
-
 # Create transmon qubit component
 transmon = Transmon(id=0)
 machine.qubits[transmon.name] = transmon
@@ -29,7 +28,7 @@ transmon.xy = IQChannel(
     opx_output_offset_Q=q10_params.qubit.IQ_bias.Q,
     frequency_converter_up=FrequencyConverter(
         mixer=Mixer(),
-        local_oscillator=LocalOscillator(power=0, frequency=q10_params.qubit.qubit_LO),
+        local_oscillator=LocalOscillator(frequency=q10_params.qubit.qubit_LO),
     ),
     intermediate_frequency=qpu_config.qubit_IF_freq("q10"),
 )
@@ -44,10 +43,9 @@ transmon.resonator = InOutIQChannel(
     opx_input_Q=("con1", q10_params.resonator.IQ_input.Q),
     frequency_converter_up=FrequencyConverter(
         mixer=Mixer(),
-        local_oscillator=LocalOscillator(
-            power=10, frequency=q10_params.resonator.resonator_LO
-        ),
+        local_oscillator=LocalOscillator(frequency=q10_params.resonator.resonator_LO),
     ),
+    intermediate_frequency=qpu_config.resonator_IF_freq("q10"),
 )
 
 

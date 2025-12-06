@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
 from params.params import Params
+
 # ---------- Basic Structures ----------
 
 
@@ -128,7 +129,6 @@ class QPUConfig:
     @staticmethod
     def from_dict(data: Dict[str, Any] = None) -> "QPUConfig":
 
-
         if data is None:
             data = Params().__dict__["data"]
         parsed = {}
@@ -176,15 +176,17 @@ class QPUConfig:
                 ),
             )
 
-
-    
         return QPUConfig(nodes=parsed)
-
 
     def qubit_IF_freq(self, qubit_name: str) -> float:
         qubit_LO = self.nodes[qubit_name].qubit.qubit_LO
         qubit_ge_freq = self.nodes[qubit_name].qubit.qubit_ge_freq
         return qubit_LO - qubit_ge_freq
+
+    def resonator_IF_freq(self, qubit_name: str) -> float:
+        resonator_LO = self.nodes[qubit_name].resonator.resonator_LO
+        resonator_freq = self.nodes[qubit_name].resonator.resonator_freq
+        return resonator_LO - resonator_freq
 
 
 if __name__ == "__main__":
