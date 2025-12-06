@@ -1,6 +1,6 @@
 from numpy import int16
-from transmon import *
-from config import *
+from qpu.transmon import *
+from config.config import *
 from qm import QuantumMachinesManager, SimulationConfig
 import numpy as np
 from matplotlib import pyplot as plt

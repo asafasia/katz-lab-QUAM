@@ -1,0 +1,11 @@
+{
+  "exclude": {
+    "**/.venv": false,
+    "**/venv": false,
+    "**/.gitignore": false
+  }
+}
+
+
+
+
