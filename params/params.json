@@ -1,0 +1,87 @@
+{
+    "q10": {
+        "qubit": {
+            "IQ_input": {
+                "I": 3,
+                "Q": 4
+            },
+            "IQ_bias": {
+                "I": 0.006982553780215784,
+                "Q": -0.08350116118923179
+            },
+            "qubit_correction_matrix": [
+                0.9884296032357139,
+                0.05852970328453447,
+                0.056607127549301826,
+                1.0220001243597812
+            ],
+            "qubit_LO": 4500000000,
+            "qubit_ge_freq": 4406763100,
+            "qubit_ef_freq": 4406764310,
+            "qubit_anharmonicity": -232349980,
+            "sweet_spot_flag": 1,
+            "qubit_freq_sweet_spot": 4414766205,
+            "qubit_freq_zero_bias": 4406764310,
+            "flux_bias_channel": 2,
+            "flux_sweet_spot": -0.3372888584760113,
+            "reset_gate": {
+                "length": 70,
+                "amplitude": 0.06576319751403452
+            },
+            "square_gate": {
+                "length": 40,
+                "length_ef": 40,
+                "length_gf": 40,
+                "amplitude_180": 0.06576319751403452,
+                "amplitude_90": 0.06576319751403452,
+                "amplitude_180_ef": 0.06576319751403452,
+                "amplitude_180_gf": 0.06576319751403452
+            },
+            "gaussian_gate": {
+                "length": 20,
+                "amplitude": 0.3052943540951371,
+                "sigma": 0.33333
+            },
+            "cos_gate": {
+                "length": 20,
+                "amplitude": 0.3052943540951371
+            },
+            "drag_gate": {
+                "length": 20,
+                "amplitude": 0.3052943540951371,
+                "drag_coef": 0.3971504
+            },
+            "saturation_pulse": {
+                "length": 100000,
+                "amplitude": 0.401
+            },
+            "T1": 45000.0,
+            "T2": 12500.03,
+            "thermalization_time": 200000
+        },
+        "resonator": {
+            "IQ_input": {
+                "I": 1,
+                "Q": 2
+            },
+            "IQ_bias": {
+                "I": -0.010268844738358691,
+                "Q": 0.08585555822268352
+            },
+            "resonator_correction_matrix": [
+                1.2738553165029447,
+                0.15479978246998546,
+                0.2219386877346767,
+                0.888500008293417
+            ],
+            "resonator_LO": 7610000000.0,
+            "resonator_freq": 7585263527,
+            "readout_pulse_length": 2000,
+            "readout_pulse_amplitude": 0.0593896,
+            "time_of_flight": 340,
+            "smearing": 0,
+            "rotation_angle": 114.74050336216277,
+            "threshold": -0.0015420123812233033
+        }
+    }
+}
