@@ -58,7 +58,7 @@ machine.qubits["q0"].resonator.operations["readout"] = readout_pulse
 qua_config = machine.generate_config()
 
 
-# machine.save("state.json")
+machine.save("state.json")
 
 
 # machine.print_summary()
