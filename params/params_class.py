@@ -68,7 +68,8 @@ class SaturationPulse:
 class QubitConfig:
     IQ_input: IQInput
     IQ_bias: IQBias
-    qubit_correction_matrix: List[float]
+    correction_gain: float
+    correction_phase: float
     qubit_LO: float
     qubit_ge_freq: float
     qubit_ef_freq: float
@@ -98,7 +99,8 @@ class QubitConfig:
 class ResonatorConfig:
     IQ_input: IQInput
     IQ_bias: IQBias
-    resonator_correction_matrix: List[float]
+    correction_gain: float
+    correction_phase: float
     resonator_LO: float
     resonator_freq: float
     readout_pulse_length: float
@@ -141,7 +143,8 @@ class QPUConfig:
                 qubit=QubitConfig(
                     IQ_input=IQInput(**qub["IQ_input"]),
                     IQ_bias=IQBias(**qub["IQ_bias"]),
-                    qubit_correction_matrix=qub["qubit_correction_matrix"],
+                    correction_gain=qub["correction_gain"],
+                    correction_phase=qub["correction_phase"],
                     qubit_LO=qub["qubit_LO"],
                     qubit_ge_freq=qub["qubit_ge_freq"],
                     qubit_ef_freq=qub["qubit_ef_freq"],
@@ -164,7 +167,8 @@ class QPUConfig:
                 resonator=ResonatorConfig(
                     IQ_input=IQInput(**res["IQ_input"]),
                     IQ_bias=IQBias(**res["IQ_bias"]),
-                    resonator_correction_matrix=res["resonator_correction_matrix"],
+                    correction_gain=res["correction_gain"],
+                    correction_phase=res["correction_phase"],
                     resonator_LO=res["resonator_LO"],
                     resonator_freq=res["resonator_freq"],
                     readout_pulse_length=res["readout_pulse_length"],

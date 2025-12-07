@@ -1,0 +1,88 @@
+{
+    "qubits": {
+        "q0": {
+            "id": 0,
+            "xy": {
+                "operations": {
+                    "X180": {
+                        "length": 40,
+                        "amplitude": 0.06576319751403452,
+                        "__class__": "quam.components.pulses.SquarePulse"
+                    }
+                },
+                "intermediate_frequency": 93236900,
+                "opx_output_I": [
+                    "con1",
+                    3
+                ],
+                "opx_output_Q": [
+                    "con1",
+                    4
+                ],
+                "opx_output_offset_I": 0.006982553780215784,
+                "opx_output_offset_Q": -0.08350116118923179,
+                "frequency_converter_up": {
+                    "local_oscillator": {
+                        "frequency": 4500000000,
+                        "__class__": "quam.components.hardware.LocalOscillator"
+                    },
+                    "mixer": {
+                        "local_oscillator_frequency": 4500000000,
+                        "intermediate_frequency": 93236900,
+                        "correction_gain": -0.03566545454545449,
+                        "correction_phase": -0.24667636363636358,
+                        "__class__": "quam.components.hardware.Mixer"
+                    },
+                    "__class__": "quam.components.hardware.FrequencyConverter"
+                },
+                "__class__": "quam.components.channels.IQChannel"
+            },
+            "resonator": {
+                "operations": {
+                    "readout": {
+                        "length": 2000,
+                        "amplitude": 0.0593896,
+                        "__class__": "quam.components.pulses.SquareReadoutPulse"
+                    }
+                },
+                "id": 0,
+                "intermediate_frequency": 24436473.0,
+                "opx_input_I": [
+                    "con1",
+                    1
+                ],
+                "opx_input_Q": [
+                    "con1",
+                    2
+                ],
+                "opx_input_offset_I": -0.010268844738358691,
+                "opx_input_offset_Q": 0.08585555822268352,
+                "opx_output_I": [
+                    "con1",
+                    1
+                ],
+                "opx_output_Q": [
+                    "con1",
+                    2
+                ],
+                "frequency_converter_up": {
+                    "local_oscillator": {
+                        "frequency": 7610000000.0,
+                        "__class__": "quam.components.hardware.LocalOscillator"
+                    },
+                    "mixer": {
+                        "local_oscillator_frequency": 7610000000.0,
+                        "intermediate_frequency": 24436473.0,
+                        "correction_gain": 0.030080000000000016,
+                        "correction_phase": -0.09290181818181818,
+                        "__class__": "quam.components.hardware.Mixer"
+                    },
+                    "__class__": "quam.components.hardware.FrequencyConverter"
+                },
+                "__class__": "quam.components.channels.InOutIQChannel"
+            },
+            "__class__": "quam.examples.superconducting_qubits.components.Transmon"
+        }
+    },
+    "__class__": "qpu.transmon.Quam"
+}
