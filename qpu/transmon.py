@@ -11,13 +11,20 @@ from quam.components.pulses import SquarePulse
 from quam.components.pulses import SquareReadoutPulse
 from qm.qua import program
 
+from qualang_tools.wirer import Instruments, Connectivity, allocate_wiring, visualize
+
+
 from params.params_class import QPUConfig
 from qualang_tools.units import unit
 
-u = unit(coerce_to_integer=True)
+import matplotlib.pyplot as plt
+from qualang_tools.wirer.wirer.channel_specs import *
+from quam_config import Quam
 
 qpu_config = QPUConfig.from_dict()
 q10_params = qpu_config.nodes["q10"]
+
+u = unit(coerce_to_integer=True)
 
 
 @quam_dataclass
@@ -25,75 +32,49 @@ class Quam(FluxTunableQuam):
     pass
 
 
-machine = Quam()
+machine = Quam().load()
 
 
-# Create transmon qubit component
-transmon = Transmon(id=0)
-machine.qubits[transmon.name] = transmon
+for k, qubit in enumerate(machine.qubits.values()):
+    qubit.resonator.f_01 = q10_params.resonator.resonator_freq
+    qubit.resonator.frequency_converter_up.LO_frequency = (
+        q10_params.resonator.resonator_LO
+    )
+    qubit.resonator.opx_output_offset_I = q10_params.resonator.IQ_bias.I
+    qubit.resonator.opx_output_offset_Q = q10_params.resonator.IQ_bias.Q
+    qubit.resonator.frequency_converter_up.gain = q10_params.resonator.correction_gain
+    qubit.resonator.frequency_converter_up.phase = q10_params.resonator.correction_phase
 
+for k, qubit in enumerate(machine.qubits.values()):
+    qubit.f_01 = q10_params.qubit.qubit_ge_freq
+    qubit.xy.frequency_converter_up.LO_frequency = q10_params.qubit.qubit_LO
+    qubit.xy.opx_output_offset_I = q10_params.qubit.IQ_bias.I
+    qubit.xy.opx_output_offset_Q = q10_params.qubit.IQ_bias.Q
+    qubit.xy.frequency_converter_up.gain = q10_params.qubit.correction_gain
+    qubit.xy.frequency_converter_up.phase = q10_params.qubit.correction_phase
 
-# Add xy drive line channel
-transmon.xy = IQChannel(
-    opx_output_I=("con1", q10_params.qubit.IQ_input.I),
-    opx_output_Q=("con1", q10_params.qubit.IQ_input.Q),
-    opx_output_offset_I=q10_params.qubit.IQ_bias.I,
-    opx_output_offset_Q=q10_params.qubit.IQ_bias.Q,
-    frequency_converter_up=FrequencyConverter(
-        mixer=Mixer(
-            intermediate_frequency=qpu_config.qubit_IF_freq("q10"),
-            local_oscillator_frequency=q10_params.qubit.qubit_LO,
-            correction_gain=q10_params.qubit.correction_gain,
-            correction_phase=q10_params.qubit.correction_phase,
-        ),
-        local_oscillator=LocalOscillator(frequency=q10_params.qubit.qubit_LO),
-    ),
-    intermediate_frequency=qpu_config.qubit_IF_freq("q10"),
-)
+for k, q in enumerate(machine.qubits):
+    # readout
+    machine.qubits[q].resonator.operations["readout"].length = 2 * u.us
+    machine.qubits[q].resonator.operations["readout"].amplitude = 0.05
+    # Qubit saturation
+    # machine.qubits[q].xy.operations["saturation"].length = 20 * u.us
+    # machine.qubits[q].xy.operations["saturation"].amplitude = 0.3
 
+    gaussian_pulse = SquarePulse(
+        length=q10_params.qubit.square_gate.length,
+        amplitude=q10_params.qubit.square_gate.amplitude_180,
+    )
 
-# Add resonator channel
-transmon.resonator = InOutIQChannel(
-    id=0,
-    opx_output_I=("con1", q10_params.resonator.IQ_input.I),
-    opx_output_Q=("con1", q10_params.resonator.IQ_input.Q),
-    opx_input_I=("con1", q10_params.resonator.IQ_input.I),
-    opx_input_Q=("con1", q10_params.resonator.IQ_input.Q),
-    opx_input_offset_I=q10_params.resonator.IQ_bias.I,
-    opx_input_offset_Q=q10_params.resonator.IQ_bias.Q,
-    frequency_converter_up=FrequencyConverter(
-        mixer=Mixer(
-            intermediate_frequency=qpu_config.resonator_IF_freq("q10"),
-            local_oscillator_frequency=q10_params.resonator.resonator_LO,
-            correction_gain=q10_params.resonator.correction_gain,
-            correction_phase=q10_params.resonator.correction_phase,
-        ),
-        local_oscillator=LocalOscillator(frequency=q10_params.resonator.resonator_LO),
-    ),
-    intermediate_frequency=qpu_config.resonator_IF_freq("q10"),
-)
-
-
-gaussian_pulse = SquarePulse(
-    length=q10_params.qubit.square_gate.length,
-    amplitude=q10_params.qubit.square_gate.amplitude_180,
-)
-readout_pulse = SquareReadoutPulse(
-    length=q10_params.resonator.readout_pulse_length,
-    amplitude=q10_params.resonator.readout_pulse_amplitude,
-)
-
-machine.qubits["q0"].xy.operations["X180"] = gaussian_pulse
-machine.qubits["q0"].resonator.operations["readout"] = readout_pulse
-
+    machine.qubits[q].xy.operations["X180"] = gaussian_pulse
 
 qua_config = machine.generate_config()
 
 
-machine.save("state.json")
+machine.save()
+
+if __name__ == "__main__":
+    machine.print_summary()
 
 
-# # machine.print_summary()
-
-
-# print(machine.active_qubits)
+print("OK !!!")

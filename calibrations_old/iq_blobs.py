@@ -13,7 +13,7 @@ from qpu.transmon import *
 n_avg = 2000
 thermalization = 300 * u.us
 
-qubit = machine.qubits["q0"]
+qubit = machine.qubits["q1"]
 rr = qubit.resonator
 
 resonator_LO = q10_params.resonator.resonator_LO

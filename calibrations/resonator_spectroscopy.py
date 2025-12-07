@@ -63,7 +63,7 @@ def custom_param(node: QualibrationNode[Parameters, Quam]):
 
 
 # Instantiate the QUA   M class from the state file
-# node.machine = Quam.load("state.json")
+node.machine = Quam.load("state.json")
 
 
 # # %% {Create_QUA_program}
