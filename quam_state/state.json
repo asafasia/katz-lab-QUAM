@@ -1,33 +1,7 @@
 {
-    "mixers": {
-        "mixer1_q1.rr": {
-            "local_oscillator": {
-                "frequency": 7610000000.0,
-                "__class__": "quam.components.hardware.LocalOscillator"
-            },
-            "mixer": {
-                "intermediate_frequency": "#/qubits/q1/resonator/intermediate_frequency",
-                "__class__": "quam_builder.architecture.superconducting.components.mixer.StandaloneMixer"
-            },
-            "gain": 0.030080000000000016,
-            "__class__": "quam.components.hardware.FrequencyConverter"
-        },
-        "mixer2_q1.xy": {
-            "local_oscillator": {
-                "frequency": 4500000000,
-                "__class__": "quam.components.hardware.LocalOscillator"
-            },
-            "mixer": {
-                "intermediate_frequency": "#/qubits/q1/xy/intermediate_frequency",
-                "__class__": "quam_builder.architecture.superconducting.components.mixer.StandaloneMixer"
-            },
-            "gain": -0.03566545454545449,
-            "__class__": "quam.components.hardware.FrequencyConverter"
-        }
-    },
     "qubits": {
-        "q1": {
-            "id": "q1",
+        "q0": {
+            "id": 0,
             "xy": {
                 "operations": {
                     "X180": {
@@ -59,84 +33,56 @@
                         "correction_phase": -0.24667636363636358,
                         "__class__": "quam.components.hardware.Mixer"
                     },
-                    "gain": -0.03566545454545449,
                     "__class__": "quam.components.hardware.FrequencyConverter"
                 },
                 "__class__": "quam.components.channels.IQChannel"
             },
             "resonator": {
-                "depletion_time": 1000,
-                "f_01": 7585563527.0,
                 "operations": {
                     "readout": {
                         "length": 2000,
-                        "amplitude": 0.05,
-                        "threshold": 0.0,
+                        "amplitude": 0.0593896,
                         "__class__": "quam.components.pulses.SquareReadoutPulse"
                     }
                 },
-                "opx_input_I": "#/wiring/qubits/q1/rr/opx_input_I",
-                "opx_input_Q": "#/wiring/qubits/q1/rr/opx_input_Q",
-                "time_of_flight": 32,
-                "opx_input_offset_I": 0.0,
-                "opx_input_offset_Q": 0.0,
-                "frequency_converter_down": "#/wiring/qubits/q1/rr/frequency_converter_down",
-                "RF_frequency": 7585563527.0,
-                "opx_output_I": "#/wiring/qubits/q1/rr/opx_output_I",
-                "opx_output_Q": "#/wiring/qubits/q1/rr/opx_output_Q",
-                "opx_output_offset_I": -0.010268844738358691,
-                "opx_output_offset_Q": 0.08585555822268352,
-                "frequency_converter_up": "#/wiring/qubits/q1/rr/frequency_converter_up",
-                "__class__": "quam_builder.architecture.superconducting.components.readout_resonator.ReadoutResonatorIQ"
+                "id": 0,
+                "intermediate_frequency": 24436473.0,
+                "opx_input_I": [
+                    "con1",
+                    1
+                ],
+                "opx_input_Q": [
+                    "con1",
+                    2
+                ],
+                "opx_input_offset_I": -0.010268844738358691,
+                "opx_input_offset_Q": 0.08585555822268352,
+                "opx_output_I": [
+                    "con1",
+                    1
+                ],
+                "opx_output_Q": [
+                    "con1",
+                    2
+                ],
+                "frequency_converter_up": {
+                    "local_oscillator": {
+                        "frequency": 7610000000.0,
+                        "__class__": "quam.components.hardware.LocalOscillator"
+                    },
+                    "mixer": {
+                        "local_oscillator_frequency": 7610000000.0,
+                        "intermediate_frequency": 24436473.0,
+                        "correction_gain": 0.030080000000000016,
+                        "correction_phase": -0.09290181818181818,
+                        "__class__": "quam.components.hardware.Mixer"
+                    },
+                    "__class__": "quam.components.hardware.FrequencyConverter"
+                },
+                "__class__": "quam.components.channels.InOutIQChannel"
             },
-            "f_01": 4406763100,
-            "grid_location": "0,0",
-            "__class__": "quam_builder.architecture.superconducting.qubit.flux_tunable_transmon.FluxTunableTransmon"
+            "__class__": "quam.examples.superconducting_qubits.components.Transmon"
         }
     },
-    "active_qubit_names": [
-        "q1"
-    ],
-    "ports": {
-        "analog_outputs": {
-            "con1": {
-                "1": {
-                    "controller_id": "con1",
-                    "port_id": 1,
-                    "__class__": "quam.components.ports.analog_outputs.OPXPlusAnalogOutputPort"
-                },
-                "2": {
-                    "controller_id": "con1",
-                    "port_id": 2,
-                    "__class__": "quam.components.ports.analog_outputs.OPXPlusAnalogOutputPort"
-                },
-                "3": {
-                    "controller_id": "con1",
-                    "port_id": 3,
-                    "__class__": "quam.components.ports.analog_outputs.OPXPlusAnalogOutputPort"
-                },
-                "4": {
-                    "controller_id": "con1",
-                    "port_id": 4,
-                    "__class__": "quam.components.ports.analog_outputs.OPXPlusAnalogOutputPort"
-                }
-            }
-        },
-        "analog_inputs": {
-            "con1": {
-                "1": {
-                    "controller_id": "con1",
-                    "port_id": 1,
-                    "__class__": "quam.components.ports.analog_inputs.OPXPlusAnalogInputPort"
-                },
-                "2": {
-                    "controller_id": "con1",
-                    "port_id": 2,
-                    "__class__": "quam.components.ports.analog_inputs.OPXPlusAnalogInputPort"
-                }
-            }
-        },
-        "__class__": "quam.components.ports.ports_containers.OPXPlusPortsContainer"
-    },
-    "__class__": "quam_config.my_quam.Quam"
+    "__class__": "qpu.transmon.Quam"
 }

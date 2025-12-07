@@ -22,7 +22,7 @@ from qualang_tools.wirer.wirer.channel_specs import *
 from qualang_tools.wirer import Instruments, Connectivity, allocate_wiring, visualize
 from quam_builder.builder.qop_connectivity import build_quam_wiring
 from quam_builder.builder.superconducting import build_quam
-from quam_config import Quam
+from transmon import Quam
 
 u = unit(coerce_to_integer=True)
 
@@ -50,25 +50,23 @@ qubit_pairs = [(qubits[i], qubits[i + 1]) for i in range(len(qubits) - 1)]
 #########################################
 
 q1_res_ch = opx_iq_ext_mixer_spec(in_port_i=1, in_port_q=2, out_port_i=1, out_port_q=2)
-q1_drive_ch = opx_iq_ext_mixer_spec(out_port_i=3, out_port_q=4)
+q1_drive_ch = opx_iq_ext_mixer_spec(out_port_i=1, out_port_q=2)
 
 #########################################
 
 
 connectivity = Connectivity()
 connectivity.add_resonator_line(qubits=qubits, constraints=q1_res_ch)
-connectivity.add_qubit_drive_lines(qubits=qubits, constraints=q1_drive_ch)
+connectivity.add_qubit_drive_lines(qubits=qubits)
 allocate_wiring(connectivity, instruments)
 
-visualize(connectivity.elements, available_channels=instruments.available_channels)
+# visualize(connectivity.elements, available_channels=instruments.available_channels)
 plt.show(block=True)
 
-user_input = input("Do you want to save the updated QUAM? (y/n)")
-if user_input.lower() == "y":
-    machine = Quam()
-    # Build the wiring (wiring.json) and initiate the QUAM
-    build_quam_wiring(connectivity, host_ip, cluster_name, machine)
+machine = Quam()
+# Build the wiring (wiring.json) and initiate the QUAM
+build_quam_wiring(connectivity, host_ip, cluster_name, machine)
 
-    # Reload QUAM, build the QUAM object and save the state as state.json
-    machine = Quam.load()
-    build_quam(machine)
+# Reload QUAM, build the QUAM object and save the state as state.json
+machine = Quam.load()
+build_quam(machine)

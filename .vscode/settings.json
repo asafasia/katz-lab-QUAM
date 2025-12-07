@@ -2,7 +2,9 @@
   "files.exclude": {
     "**/.venv": true,
     "**/venv": true,
-    "**/.gitignore": true
+    "**/.gitignore": true,
+    "**/.vscode": true,
+    "**/__pycache__": true
   }
 }
 

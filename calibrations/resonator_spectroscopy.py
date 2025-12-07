@@ -63,66 +63,65 @@ def custom_param(node: QualibrationNode[Parameters, Quam]):
 
 
 # Instantiate the QUA   M class from the state file
-node.machine = Quam.load("state.json")
+node.machine = Quam.load("quam_state/state.json")
 
 
-# # %% {Create_QUA_program}
-# @node.run_action(skip_if=node.parameters.load_data_id is not None)
-# def create_qua_program(node: QualibrationNode[Parameters, Quam]):
-#     """Create the sweep axes and generate the QUA program from the pulse sequence and the node parameters."""
-#     # Class containing tools to help handle units and conversions.
-#     u = unit(coerce_to_integer=True)
-#     # Get the active qubits from the node and organize them by batches
+# %% {Create_QUA_program}
+@node.run_action(skip_if=node.parameters.load_data_id is not None)
+def create_qua_program(node: QualibrationNode[Parameters, Quam]):
+    """Create the sweep axes and generate the QUA program from the pulse sequence and the node parameters."""
+    # Class containing tools to help handle units and conversions.
+    u = unit(coerce_to_integer=True)
+    # Get the active qubits from the node and organize them by batches
 
-#     node.namespace["qubits"] = qubits = get_qubits(node)
+    node.namespace["qubits"] = qubits = get_qubits(node)
 
+    num_qubits = len(qubits)
+    # Extract the sweep parameters and axes from the node parameters
+    n_avg = node.parameters.num_shots
+    # The frequency sweep around the resonator resonance frequency
+    span = node.parameters.frequency_span_in_mhz * u.MHz
+    step = node.parameters.frequency_step_in_mhz * u.MHz
+    dfs = np.arange(-span / 2, +span / 2, step)
+    # Register the sweep axes to be added to the dataset when fetching data
+    node.namespace["sweep_axes"] = {
+        "qubit": xr.DataArray(qubits.get_names()),
+        "detuning": xr.DataArray(
+            dfs, attrs={"long_name": "readout frequency", "units": "Hz"}
+        ),
+    }
 
-#     num_qubits = len(qubits)
-#     # Extract the sweep parameters and axes from the node parameters
-#     n_avg = node.parameters.num_shots
-#     # The frequency sweep around the resonator resonance frequency
-#     span = node.parameters.frequency_span_in_mhz * u.MHz
-#     step = node.parameters.frequency_step_in_mhz * u.MHz
-#     dfs = np.arange(-span / 2, +span / 2, step)
-#     # Register the sweep axes to be added to the dataset when fetching data
-#     node.namespace["sweep_axes"] = {
-#         "qubit": xr.DataArray(qubits.get_names()),
-#         "detuning": xr.DataArray(
-#             dfs, attrs={"long_name": "readout frequency", "units": "Hz"}
-#     ),
-# }
+    # The QUA program stored in the node namespace to be transfer to the simulation and execution run_actions
+    with program() as node.namespace["qua_program"]:
+        I, I_st, Q, Q_st, n, n_st = node.machine.declare_qua_variables()
+        df = declare(int)  # QUA variable for the readout frequency
 
-# # The QUA program stored in the node namespace to be transfer to the simulation and execution run_actions
-# with program() as node.namespace["qua_program"]:
-#     I, I_st, Q, Q_st, n, n_st = node.machine.declare_qua_variables()
-#     df = declare(int)  # QUA variable for the readout frequency
+        for multiplexed_qubits in qubits.batch():
+            # Initialize the QPU in terms of flux points (flux tunable transmons and/or tunable couplers)
+            for qubit in multiplexed_qubits.values():
+                node.machine.initialize_qpu(target=qubit)
+            align()
+            with for_(n, 0, n < n_avg, n + 1):
+                save(n, n_st)
+                with for_(*from_array(df, dfs)):
+                    for i, qubit in multiplexed_qubits.items():
+                        rr = qubit.resonator
+                        # Update the resonator frequencies for all resonators
+                        rr.update_frequency(df + rr.intermediate_frequency)
+                        # Measure the resonator
+                        rr.measure("readout", qua_vars=(I[i], Q[i]))
+                        # wait for the resonator to deplete
+                        rr.wait(rr.depletion_time * u.ns)
+                        # save data
+                        save(I[i], I_st[i])
+                        save(Q[i], Q_st[i])
+                    align()
 
-#     for multiplexed_qubits in qubits.batch():
-#         # Initialize the QPU in terms of flux points (flux tunable transmons and/or tunable couplers)
-#         for qubit in multiplexed_qubits.values():
-#             node.machine.initialize_qpu(target=qubit)
-#         align()
-#         with for_(n, 0, n < n_avg, n + 1):
-#             save(n, n_st)
-#             with for_(*from_array(df, dfs)):
-#                 for i, qubit in multiplexed_qubits.items():
-#                     rr = qubit.resonator
-#                     # Update the resonator frequencies for all resonators
-#                     rr.update_frequency(df + rr.intermediate_frequency)
-#                     # Measure the resonator
-#                     rr.measure("readout", qua_vars=(I[i], Q[i]))
-#                     # wait for the resonator to deplete
-#                     rr.wait(rr.depletion_time * u.ns)
-#                     # save data
-#                     save(I[i], I_st[i])
-#                     save(Q[i], Q_st[i])
-#                 align()
-
-#     with stream_processing():
-#         n_st.save("n")
-#         for i in range(num_qubits):
-#             I_st[i].buffer(len(dfs)).average().save(f"I{i + 1}")
-#             Q_st[i].buffer(len(dfs)).average().save(f"Q{i + 1}")
+        with stream_processing():
+            n_st.save("n")
+            for i in range(num_qubits):
+                I_st[i].buffer(len(dfs)).average().save(f"I{i + 1}")
+                Q_st[i].buffer(len(dfs)).average().save(f"Q{i + 1}")
 
 
 # # %% {Simulate}

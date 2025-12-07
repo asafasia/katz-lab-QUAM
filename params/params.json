@@ -66,9 +66,8 @@
             },
             "correction_gain": 0.030080000000000016,
             "correction_phase": -0.09290181818181818,
-
-            "resonator_LO": 7610000000.0,
-            "resonator_freq": 7585563527.0,
+            "resonator_LO": 7610000000,
+            "resonator_freq": 7585563527,
             "readout_pulse_length": 2000,
             "readout_pulse_amplitude": 0.0593896,
             "time_of_flight": 340,
