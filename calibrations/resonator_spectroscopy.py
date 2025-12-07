@@ -13,7 +13,7 @@ from qualang_tools.units import unit
 
 from qualibrate import QualibrationNode
 from quam_config import Quam
-from calibration_utils.resonator_spectroscopy import (
+from calibration_utils.resonator_sepctroscopy import (
     Parameters,
     process_raw_dataset,
     fit_raw_data,
