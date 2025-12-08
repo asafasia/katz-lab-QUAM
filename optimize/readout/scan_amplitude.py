@@ -53,7 +53,8 @@ class ScanAmplitude:
         plt.title("Scan Amplitude")
         plt.grid()
 
-        fidelities_smooth = np.convolve(fidelities, np.ones(5) / 5, mode="valid")
+        from scipy.ndimage import gaussian_filter
+        fidelities_smooth = gaussian_filter(fidelities, sigma=2)
 
 
         plt.plot(amplitudes, fidelities)

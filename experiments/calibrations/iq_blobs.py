@@ -37,7 +37,7 @@ class IQBlobsExperiment(BaseExperiment):
 
     def execute_program(self):
         self.qm = self.qmm.open_qm(self.config)
-        job = self.qm.execute(self.program)
+        job = self.qm.execute(self.program,dry_run=True)
         variable_list = ["Ig", "Qg", "Ie", "Qe"]
         results = fetching_tool(job, data_list=variable_list)
 
