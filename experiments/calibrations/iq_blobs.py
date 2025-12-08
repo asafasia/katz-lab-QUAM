@@ -10,129 +10,127 @@ from qpu.config import *
 
 from qualang_tools.analysis.discriminator import two_state_discriminator
 from experiments.core.base_experiment import BaseExperiment
+from utils import Options
+
+
 # -------------------------------------------------------------------------
 # PARAMETERS
 # -------------------------------------------------------------------------
+class IQBlobsOptions(Options):
+    pass
+
 
 class IQBlobsExperiment(BaseExperiment):
-    def __init__(self,qubit, options):
-        self.qubit = qubit
-        self.options = options
+    def __init__(self, qubit, options=None):
+        if options is None:
+            options = IQBlobsOptions()
+        super().__init__(qubit, options)
 
-    def run(self):
+    def define_program(self):
+        self.program = _program(self.qubit, self.options)
+
+    def execute_program(self):
         pass
 
-    def analyze(self):
+    def analyze_results(self):
         pass
 
-    def plot(self):
+    def plot_results(self):
         pass
 
-    def save(self):
+    def save_results(self):
         pass
 
-    
-
-    
-
+    def update_params(self):
+        pass
 
 
+def _program(qubit, n_avg, thermalization):
+    rr = qubit.resonator
 
-n_avg = 2000
-thermalization = 3 * u.us
+    with program() as iq_blobs:
 
-qubit = machine.qubits["q10"]
-rr = qubit.resonator
+        n = declare(int)
+        shot = declare(int)
+        # Ig = declare(fixed)
+        # Qg = declare(fixed)
+        # Ie = declare(fixed)
+        # Qe = declare(fixed)
+        Ig_st = declare_stream()
+        Qg_st = declare_stream()
+        Ie_st = declare_stream()
+        Qe_st = declare_stream()
 
-resonator_LO = q10_params.resonator.resonator_LO
-res_freq = q10_params.resonator.resonator_freq
+        with for_(n, 0, n < n_avg, n + 1):
+            # ----------- Ground measurement ---------------
+            rr.measure("readout", qua_vars=(Ig, Qg))
+            save(Ig, Ig_st)
+            save(Qg, Qg_st)
+            wait(thermalization, rr.name)
+            qubit.xy.align()
 
-simulate = True
+            # ----------- Excited measurement ---------------
+            qubit.xy.play("X180")  # π pulse
+            qubit.xy.align()
 
-# -------------------------------------------------------------------------
-# QUA PROGRAM
-# -------------------------------------------------------------------------
-with program() as iq_blobs:
+            rr.measure("readout", qua_vars=(Ie, Qe))
+            save(Ie, Ie_st)
+            save(Qe, Qe_st)
 
-    n = declare(int)
-    shot = declare(int)
+            wait(thermalization, rr.name)
 
-    # single-shot measurements
-    Ig = declare(fixed)
-    Qg = declare(fixed)
-    Ie = declare(fixed)
-    Qe = declare(fixed)
+        with stream_processing():
+            Ig_st.buffer(n_avg).save("Ig")
+            Qg_st.buffer(n_avg).save("Qg")
+            Ie_st.buffer(n_avg).save("Ie")
+            Qe_st.buffer(n_avg).save("Qe")
 
-    Ig_st = declare_stream()
-    Qg_st = declare_stream()
-    Ie_st = declare_stream()
-    Qe_st = declare_stream()
-
-    with for_(n, 0, n < n_avg, n + 1):
-
-        # ----------- Ground measurement ---------------
-        rr.measure("readout", qua_vars=(Ig, Qg))
-        save(Ig, Ig_st)
-        save(Qg, Qg_st)
-        wait(thermalization, rr.name)
-        qubit.xy.align()
-
-        # ----------- Excited measurement ---------------
-        qubit.xy.play("X180")  # π pulse
-        qubit.xy.align()
-
-        rr.measure("readout", qua_vars=(Ie, Qe))
-        save(Ie, Ie_st)
-        save(Qe, Qe_st)
-
-        wait(thermalization, rr.name)
-
-    with stream_processing():
-        Ig_st.buffer(n_avg).save("Ig")
-        Qg_st.buffer(n_avg).save("Qg")
-        Ie_st.buffer(n_avg).save("Ie")
-        Qe_st.buffer(n_avg).save("Qe")
+    return iq_blobs
 
 
-# -------------------------------------------------------------------------
-# RUN
-# -------------------------------------------------------------------------
 if __name__ == "__main__":
+    experiment = IQBlobsExperiment("q10")
+    experiment.run()
 
-    qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
-    qm = qmm.open_qm(qua_config)
+# # -------------------------------------------------------------------------
+# # RUN
+# # -------------------------------------------------------------------------
+# if __name__ == "__main__":
 
-    if simulate:
-        job = qm.simulate(iq_blobs, SimulationConfig(duration=10 * u.us))
-        job.get_simulated_samples().con1.plot()
-        plt.show()
-    else:
-        job = qm.execute(iq_blobs)
+#     qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
+#     qm = qmm.open_qm(qua_config)
 
-        results = fetching_tool(job, ["Ig", "Qg", "Ie", "Qe"])
-        Ig, Qg, Ie, Qe = results.fetch_all()
+#     if simulate:
+#         job = qm.simulate(iq_blobs, SimulationConfig(duration=10 * u.us))
+#         job.get_simulated_samples().con1.plot()
+#         plt.show()
+#     else:
+#         job = qm.execute(iq_blobs)
 
-        # ---------------------------------------------------
-        #   PROCESSING
-        #   Ig/Qg: shape = [freq, n_avg, shots]
-        # ---------------------------------------------------
-        Ig = np.array(Ig)
-        Qg = np.array(Qg)
-        Ie = np.array(Ie)
-        Qe = np.array(Qe)
+#         results = fetching_tool(job, ["Ig", "Qg", "Ie", "Qe"])
+#         Ig, Qg, Ie, Qe = results.fetch_all()
 
-        # collapse n_avg dimension → all shots in one dimension
+#         # ---------------------------------------------------
+#         #   PROCESSING
+#         #   Ig/Qg: shape = [freq, n_avg, shots]
+#         # ---------------------------------------------------
+#         Ig = np.array(Ig)
+#         Qg = np.array(Qg)
+#         Ie = np.array(Ie)
+#         Qe = np.array(Qe)
 
-        # choose frequency with biggest separation
+#         # collapse n_avg dimension → all shots in one dimension
 
-        # select best frequency IQ data
+#         # choose frequency with biggest separation
 
-        # ---------------------------------------------------
-        #       PLOT IQ BLOBS
-        # ---------------------------------------------------
+#         # select best frequency IQ data
 
-        angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
-            Ig, Qg, Ie, Qe, b_print=True, b_plot=True
-        )
+#         # ---------------------------------------------------
+#         #       PLOT IQ BLOBS
+#         # ---------------------------------------------------
 
-        plt.show()
+#         angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
+#             Ig, Qg, Ie, Qe, b_print=True, b_plot=True
+#         )
+
+#         plt.show()

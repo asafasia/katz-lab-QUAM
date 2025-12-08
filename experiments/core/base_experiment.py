@@ -3,31 +3,33 @@ from qm import QuantumMachinesManager, SimulationConfig
 from utils.options import Options
 from qm.qua import *
 
+from qpu.transmon import create_machine
+from params import QPUConfig
+from qpu.config import *
+
 
 class BaseExperiment(ABC):
     def __init__(
         self,
         qubit: str,
         options: Options,
-        config: dict = None,
-        qmm: QuantumMachinesManager = None,
+        params=None,
     ):
 
         self.data = dict()
-        self.qubit = qubit
-        self.qubit_params = args[qubit]["qubit"]
-
-        if qmm is None:
-            # qmm = QuantumMachinesManager(host=qm_host)
-            qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
-
-        if config is None:
-            config = load_config(options)
-
-        self.qmm = qmm
-        self.config = config
-
+        self.program = None
         self.options = options
+        self.params = params
+
+        qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
+
+        if params is None:
+            params = QPUConfig()
+
+        self.machine = create_machine(params)
+        self.config = self.machine.generate_config()
+
+        self.qubit = self.machine.qubits[qubit]
 
     @abstractmethod
     def define_program(self):
