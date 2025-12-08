@@ -56,9 +56,9 @@ class PowerRabiExperiment(BaseExperiment):
                     rr.wait(300 * u.us)
                     threshold = self.params.qubits['q10'].resonator.threshold
                     with if_(I > threshold):
-                        assign(1, state)
+                        assign(state,1)
                     with else_():
-                        assign(0, state)
+                        assign(state,0)
 
                     save(I, I_st)
                     save(Q, Q_st)
@@ -135,14 +135,14 @@ class PowerRabiExperiment(BaseExperiment):
         Q = self.data["Q"]
         state = self.data["state"]
 
-        # plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, Q, ".")
-        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, I, ".")
-        plt.show()
-        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, ".")
-        plt.show()
+
+        if not self.options.state_discrimination:
+            plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, I, ".")
+        else:
+            plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, ".")
         plt.title("Power Rabi g->e transition")
         plt.xlabel("Rabi amplitude (mV)")
-        plt.ylabel("state")
+        plt.ylabel()
         plt.show()
 
     def save_results(self):
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     options.n_avg = 200
     options.n_a = 100
     options.num_pis = 4
-    options.state_discrimination = False
+    options.state_discrimination = True
     options.simulate = False
 
     amps = np.linspace(0, 1, 100)
