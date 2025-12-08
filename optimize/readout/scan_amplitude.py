@@ -69,7 +69,7 @@ class ScanAmplitude:
 
 if __name__ == "__main__":
 
-    amplitudes = np.linspace(0, 0.15, 30)
+    amplitudes = np.linspace(0, 0.15, 100)
     scan_amplitude = ScanAmplitude(
         qubit="q10", options=Options(), amplitudes=amplitudes
     )
