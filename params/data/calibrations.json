@@ -8,7 +8,7 @@
       "thermalization_time": 200000
     },
     "resonator": {
-      "resonator_freq": 7585563527,
+      "resonator_freq": 7585763527,
       "time_of_flight": 340,
       "smearing": 0,
       "rotation_angle": 114.74050336216277,

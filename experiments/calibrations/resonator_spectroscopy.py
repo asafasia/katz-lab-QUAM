@@ -33,10 +33,10 @@ class ResonatorSpectroscopyExperiment(BaseExperiment):
         qubit: str,
         options: ResonatorSpecOptions = ResonatorSpecOptions(),
         params: QPUConfig = None,
+        frequencies: np.ndarray = None,
     ):
         super().__init__(qubit=qubit, options=options, params=params)
-        self.frequencies = None
-        self.frequencies_IF = None
+        self.frequencies = frequencies
 
     # --------------------------------------------------
     # QUA program
@@ -45,17 +45,11 @@ class ResonatorSpectroscopyExperiment(BaseExperiment):
         rr = self.qubit.resonator
 
         resonator_LO = rr.frequency_converter_up.LO_frequency
-        resonator_freq = rr.RF_frequency
+        resonator_IF = rr.intermediate_frequency
+        self.resonator_freq = resonator_LO - resonator_IF
 
-        span = self.options.span
-        df = self.options.df
-
-        self.frequencies = np.arange(
-            resonator_freq - span / 2,
-            resonator_freq + span / 2,
-            df,
-        )
-        self.frequencies_IF = resonator_LO - self.frequencies
+        self.frequencies_IF = self.frequencies + resonator_IF
+        self.frequencies_RF = -self.frequencies + self.resonator_freq
 
         self.program = _program(
             qubit=self.qubit,
@@ -89,7 +83,7 @@ class ResonatorSpectroscopyExperiment(BaseExperiment):
             Q2 = np.mean(Q2, axis=0)
 
             self.data = {
-                "frequencies": self.frequencies,
+                "frequencies": self.frequencies_RF,
                 "I1": I1,
                 "Q1": Q1,
                 "I2": I2,
@@ -143,17 +137,22 @@ class ResonatorSpectroscopyExperiment(BaseExperiment):
         diff = self.data["diff"]
         f_max = self.data["f_max"]
 
+        print(int(f_max))
+
         plt.figure()
         plt.plot(freqs, amp1, label="|state1| (ground)")
         plt.plot(freqs, amp2, label="|state2| (excited)")
         plt.plot(freqs, diff, label="|state1 - state2|")
 
         plt.axvline(f_max, linestyle="--", label=f"max diff: {f_max/1e9:.6f} GHz")
-
+        plt.axvline(
+            self.resonator_freq, linestyle="--", label=f"max diff: {f_max/1e9:.6f} GHz"
+        )
         plt.xlabel("Frequency [Hz]")
         plt.ylabel("Amplitude")
         plt.legend()
         plt.grid(True)
+        plt.show()
 
     def save_results(self):
         # TODO: hook into your usual saving mechanism
@@ -169,7 +168,7 @@ class ResonatorSpectroscopyExperiment(BaseExperiment):
 # -------------------------------------------------------------------------
 def _program(qubit, options: ResonatorSpecOptions, frequencies_IF):
     rr = qubit.resonator
-    thermalization = options.thermalization
+    thermalization = 200 * u.us
 
     n_avg = options.n_avg
     n_freqs = len(frequencies_IF)
@@ -224,18 +223,22 @@ if __name__ == "__main__":
 
     options = ResonatorSpecOptions()
     options.simulate = False
-    # or True if you want simulation
     params = QPUConfig()
 
-    # # Example: adjust readout pulse from params if you want
     params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
     params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
+
+    span = 20e6
+    N = 100
+    df = span // N
+
+    frequencies = np.arange(-span / 2, span / 2, df)
 
     experiment = ResonatorSpectroscopyExperiment(
         qubit=qubit,
         options=options,
         params=params,
+        frequencies=frequencies,
     )
 
-    # experiment.run()
-    # plt.show()
+    experiment.run()

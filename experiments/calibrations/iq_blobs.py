@@ -19,7 +19,7 @@ from dataclasses import dataclass
 # -------------------------------------------------------------------------
 @dataclass
 class IQBlobsOptions(Options):
-    n_avg: int = 2000
+    n_avg: int = 5000
 
 
 class IQBlobsExperiment(BaseExperiment):
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     options = IQBlobsOptions()
     options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.04
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.07
     params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
