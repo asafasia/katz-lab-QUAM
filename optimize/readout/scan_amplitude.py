@@ -69,9 +69,14 @@ class ScanAmplitude:
 
 if __name__ == "__main__":
 
+    params = QPUConfig()
+    params.qubits["q10"].gates.readout_pulse.length = 2000 * u.ns
+
+
+
     amplitudes = np.linspace(0, 0.15, 100)
     scan_amplitude = ScanAmplitude(
-        qubit="q10", options=Options(), amplitudes=amplitudes
+        qubit="q10", options=Options(), amplitudes=amplitudes, params=params
     )
     scan_amplitude.run()
     scan_amplitude.plot_results()
