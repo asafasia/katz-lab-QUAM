@@ -24,6 +24,7 @@ def create_machine(params):
     transmon = Transmon(id="10")
     qubit_params = params.qubits["q10"].qubit
     resonator_params = params.qubits["q10"].resonator
+    gates = params.qubits["q10"].gates
 
     transmon.xy = IQChannel(
         opx_output_I=(controller, qubit_params.IQ_input.I),
@@ -56,11 +57,15 @@ def create_machine(params):
 
     # Assuming qubit_xy is configured as an IQChannel
     transmon.xy.operations["X180"] = pulses.SquarePulse(
-        length=40, amplitude=0.0, axis_angle=0  # Phase angle on the IQ plane
+        length=gates.square_gate.length,
+        amplitude=gates.square_gate.amplitude,
+        axis_angle=0,  # Phase angle on the IQ plane
     )
 
     transmon.resonator.operations["readout"] = pulses.SquareReadoutPulse(
-        length=1000, amplitude=0.1, integration_weights=[(1, 500)]
+        length=gates.readout_pulse.length,
+        amplitude=gates.readout_pulse.amplitude,
+        integration_weights=[(1, gates.readout_pulse.length // 2)],
     )
 
     machine.qubits[transmon.name] = transmon

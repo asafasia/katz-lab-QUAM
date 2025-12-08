@@ -31,22 +31,38 @@ class IQBlobsExperiment(BaseExperiment):
         self.program = _program(self.qubit, self.options)
 
     def execute_program(self):
-        pass
+        job = self.qm.execute(self.program)
+        variable_list = ["Ig", "Qg", "Ie", "Qe"]
+        results = fetching_tool(job, data_list=variable_list)
+
+        Ig, Qg, Ie, Qe = results.fetch_all()
+        self.data = {
+            "Ig": Ig,
+            "Qg": Qg,
+            "Ie": Ie,
+            "Qe": Qe,
+        }
 
     def analyze_results(self):
-        pass
-
-    def plot_results(self):
-        results = fetching_tool(job, ["Ig", "Qg", "Ie", "Qe"])
-        Ig, Qg, Ie, Qe = results.fetch_all()
-
-        Ig = np.array(Ig)
-        Qg = np.array(Qg)
-        Ie = np.array(Ie)
-        Qe = np.array(Qe)
 
         angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
-            Ig, Qg, Ie, Qe, b_print=True, b_plot=True
+            self.data["Ig"],
+            self.data["Qg"],
+            self.data["Ie"],
+            self.data["Qe"],
+            b_print=False,
+            b_plot=False,
+        )
+
+    def plot_results(self):
+        Ig = np.array(self.data["Ig"])
+        Qg = np.array(self.data["Qg"])
+        Ie = np.array(self.data["Ie"])
+        Qe = np.array(self.data["Qe"])
+
+
+        angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
+            Ig, Qg, Ie, Qe, b_print=self.options.plot, b_plot=self.options.plot
         )
 
     def save_results(self):
@@ -102,3 +118,4 @@ def _program(qubit, n_avg, thermalization):
 if __name__ == "__main__":
     experiment = IQBlobsExperiment("q10")
     experiment.run()
+
