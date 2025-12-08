@@ -9,11 +9,8 @@ from quam.examples.superconducting_qubits import Transmon, Quam
 from quam.components import pulses
 
 from params import QPUConfig
+from utils import u
 
-from qualang_tools.units import unit
-
-
-u = unit(coerce_to_integer=True)
 
 
 def create_machine(params: QPUConfig):
@@ -90,3 +87,6 @@ if __name__ == "__main__":
     config = machine.generate_config()
 
     machine.load()
+
+
+    

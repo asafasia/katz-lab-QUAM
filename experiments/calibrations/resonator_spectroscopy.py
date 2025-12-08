@@ -1,112 +1,241 @@
 import numpy as np
-from scipy import signal
 import matplotlib.pyplot as plt
-from qm import QuantumMachinesManager, SimulationConfig
+
+from dataclasses import dataclass
 
 from qm.qua import *
-from qm import QuantumMachinesManager
+from qm import SimulationConfig
 from qualang_tools.results import fetching_tool
 from qualang_tools.loops import from_array
-from qpu.config import *
+
 from qpu.transmon import *
-from qpu.transmon import u
+from params import QPUConfig
 
-n_avg = 200
-long_pulse = True
-qubit = machine.qubits["10"]
+from experiments.core.base_experiment import BaseExperiment
+from utils import Options
+from utils import u
 
 
-resonator_LO = qubit.resonator.frequency_converter_up.LO_frequency
-resonator_freq = qubit.resonator.RF_frequency
-span = 200e6
-df = 1e6
+# -------------------------------------------------------------------------
+# OPTIONS
+# -------------------------------------------------------------------------
+@dataclass
+class ResonatorSpecOptions(Options):
+    n_avg: int = 200
 
-f_min = resonator_freq - span / 2
-f_max = resonator_freq + span / 2
-frequencies = np.arange(f_min, f_max, df)
-frequencies_IF = resonator_LO - frequencies
-thermalization = 300 * u.us
-simulate = True
 
-with program() as resonator_spec:
-    n = declare(int)  # QUA variable for the averaging loop
-    f = declare(int)  # QUA variable for the readout frequency
-    I1 = declare(fixed)  # QUA variable for the measured 'I' quadrature
-    Q1 = declare(fixed)  # QUA variable for the measured 'Q' quadrature\
-    I2 = declare(fixed)  # QUA variable for the measured 'I' quadrature
-    Q2 = declare(fixed)  # QUA variable for the measured 'Q' quadrature
-    I_st1 = declare_stream()  # Stream for the 'I' quadrature
-    Q_st1 = declare_stream()  # Stream for the 'Q' quadrature
-    I_st2 = declare_stream()  # Stream for the 'I' quadrature
-    Q_st2 = declare_stream()  # Stream for the 'Q' quadrature
-    n_st = declare_stream()  # Stream for the averaging iteration 'n'
+# -------------------------------------------------------------------------
+# EXPERIMENT
+# -------------------------------------------------------------------------
+class ResonatorSpectroscopyExperiment(BaseExperiment):
+    def __init__(
+        self,
+        qubit: str,
+        options: ResonatorSpecOptions = ResonatorSpecOptions(),
+        params: QPUConfig = None,
+    ):
+        super().__init__(qubit=qubit, options=options, params=params)
+        self.frequencies = None
+        self.frequencies_IF = None
 
-    with for_(n, 0, n < n_avg, n + 1):
-        with for_(*from_array(f, frequencies_IF)):
-            rr = qubit.resonator
-            rr.update_frequency(f)
-            rr.measure("readout")
-            rr.wait(thermalization)
-            rr.align()
+    # --------------------------------------------------
+    # QUA program
+    # --------------------------------------------------
+    def define_program(self):
+        rr = self.qubit.resonator
 
-            save(I1, I_st1)
-            save(Q1, Q_st1)
+        resonator_LO = rr.frequency_converter_up.LO_frequency
+        resonator_freq = rr.RF_frequency
 
-            qubit.xy.play("X180")
-            rr.align()
+        span = self.options.span
+        df = self.options.df
 
-            rr.measure("readout", qua_vars=(I2, Q2), stream=None)
-            wait(thermalization, rr.name)
-            save(I2, I_st2)
-            save(Q2, Q_st2)
+        self.frequencies = np.arange(
+            resonator_freq - span / 2,
+            resonator_freq + span / 2,
+            df,
+        )
+        self.frequencies_IF = resonator_LO - self.frequencies
 
-    with stream_processing():
-        I_st1.buffer(len(frequencies)).buffer(n_avg).save("I1")
-        Q_st1.buffer(len(frequencies)).buffer(n_avg).save("Q1")
-        I_st2.buffer(len(frequencies)).buffer(n_avg).save("I2")
-        Q_st2.buffer(len(frequencies)).buffer(n_avg).save("Q2")
-        # n_st.save("iteration")
+        self.program = _program(
+            qubit=self.qubit,
+            options=self.options,
+            frequencies_IF=self.frequencies_IF,
+        )
+
+    # --------------------------------------------------
+    # Execution
+    # --------------------------------------------------
+    def execute_program(self):
+        self.qm = self.qmm.open_qm(self.config)
+
+        if self.options.simulate:
+            job = self.qm.simulate(
+                self.program,
+                SimulationConfig(duration=int(self.options.simulate_duration)),
+            )
+            self.data = {"simulation": job.get_simulated_samples()}
+        else:
+            job = self.qm.execute(self.program)
+            variable_list = ["I1", "Q1", "I2", "Q2"]
+            results = fetching_tool(job, data_list=variable_list)
+
+            I1, Q1, I2, Q2 = results.fetch_all()
+
+            # Average over shots (n_avg)
+            I1 = np.mean(I1, axis=0)
+            Q1 = np.mean(Q1, axis=0)
+            I2 = np.mean(I2, axis=0)
+            Q2 = np.mean(Q2, axis=0)
+
+            self.data = {
+                "frequencies": self.frequencies,
+                "I1": I1,
+                "Q1": Q1,
+                "I2": I2,
+                "Q2": Q2,
+            }
+
+    # --------------------------------------------------
+    # Analysis
+    # --------------------------------------------------
+    def analyze_results(self):
+        if self.options.simulate:
+            return
+
+        freqs = self.data["frequencies"]
+        I1 = self.data["I1"]
+        Q1 = self.data["Q1"]
+        I2 = self.data["I2"]
+        Q2 = self.data["Q2"]
+
+        state1 = I1 + 1j * Q1
+        state2 = I2 + 1j * Q2
+
+        amp1 = np.abs(state1)
+        amp2 = np.abs(state2)
+        diff = np.abs(state1 - state2)
+
+        idx_max = int(np.argmax(diff))
+        f_max = float(freqs[idx_max])
+
+        self.data["state1"] = state1
+        self.data["state2"] = state2
+        self.data["amp1"] = amp1
+        self.data["amp2"] = amp2
+        self.data["diff"] = diff
+        self.data["f_max"] = f_max
+        self.data["idx_max"] = idx_max
+
+    # --------------------------------------------------
+    # Plotting
+    # --------------------------------------------------
+    def plot_results(self):
+        if self.options.simulate:
+            # Plot the simulated samples (same style as your script)
+            sim = self.data["simulation"]
+            sim.con1.plot()
+            return
+
+        freqs = self.data["frequencies"]
+        amp1 = self.data["amp1"]
+        amp2 = self.data["amp2"]
+        diff = self.data["diff"]
+        f_max = self.data["f_max"]
+
+        plt.figure()
+        plt.plot(freqs, amp1, label="|state1| (ground)")
+        plt.plot(freqs, amp2, label="|state2| (excited)")
+        plt.plot(freqs, diff, label="|state1 - state2|")
+
+        plt.axvline(f_max, linestyle="--", label=f"max diff: {f_max/1e9:.6f} GHz")
+
+        plt.xlabel("Frequency [Hz]")
+        plt.ylabel("Amplitude")
+        plt.legend()
+        plt.grid(True)
+
+    def save_results(self):
+        # TODO: hook into your usual saving mechanism
+        pass
+
+    def update_params(self):
+        # TODO: e.g., update resonator frequency in params based on f_max
         pass
 
 
+# -------------------------------------------------------------------------
+# QUA program factory
+# -------------------------------------------------------------------------
+def _program(qubit, options: ResonatorSpecOptions, frequencies_IF):
+    rr = qubit.resonator
+    thermalization = options.thermalization
+
+    n_avg = options.n_avg
+    n_freqs = len(frequencies_IF)
+
+    with program() as resonator_spec:
+        n = declare(int)  # averaging loop
+        f = declare(int)  # IF frequency
+
+        I1 = declare(fixed)
+        Q1 = declare(fixed)
+        I2 = declare(fixed)
+        Q2 = declare(fixed)
+
+        I_st1 = declare_stream()
+        Q_st1 = declare_stream()
+        I_st2 = declare_stream()
+        Q_st2 = declare_stream()
+
+        with for_(n, 0, n < n_avg, n + 1):
+            with for_(*from_array(f, frequencies_IF)):
+                # ---------- Ground state measurement ----------
+                rr.update_frequency(f)
+                rr.measure("readout", qua_vars=(I1, Q1))
+                save(I1, I_st1)
+                save(Q1, Q_st1)
+                wait(thermalization, rr.name)
+                qubit.xy.align()
+
+                # ---------- Excited state measurement ----------
+                qubit.xy.play("X180")
+                qubit.xy.align()
+
+                rr.measure("readout", qua_vars=(I2, Q2))
+                save(I2, I_st2)
+                save(Q2, Q_st2)
+                wait(thermalization, rr.name)
+
+        with stream_processing():
+            I_st1.buffer(n_freqs).buffer(n_avg).save("I1")
+            Q_st1.buffer(n_freqs).buffer(n_avg).save("Q1")
+            I_st2.buffer(n_freqs).buffer(n_avg).save("I2")
+            Q_st2.buffer(n_freqs).buffer(n_avg).save("Q2")
+
+    return resonator_spec
+
+
+# -------------------------------------------------------------------------
+# Example main (matching your IQBlobs style)
+# -------------------------------------------------------------------------
 if __name__ == "__main__":
+    qubit = "q10"
 
-    qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
-    qm = qmm.open_qm(qua_config)  # Open a quantum machine with the configuration
+    options = ResonatorSpecOptions()
+    options.simulate = False
+    # or True if you want simulation
+    params = QPUConfig()
 
-    if simulate:
-        job = qm.simulate(resonator_spec, SimulationConfig(duration=100 * u.us))
-        job.get_simulated_samples().con1.plot()
-        plt.show()
-    else:
-        job = qm.execute(resonator_spec)
-        results = fetching_tool(job, data_list=["I1", "Q1", "I2", "Q2"])
+    # # Example: adjust readout pulse from params if you want
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
+    params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
-        I1, Q1, I2, Q2 = results.fetch_all()
+    experiment = ResonatorSpectroscopyExperiment(
+        qubit=qubit,
+        options=options,
+        params=params,
+    )
 
-        I1 = np.mean(I1, axis=0)
-        Q1 = np.mean(Q1, axis=0)
-        # I2 = np.mean(I2, axis=0)
-        # Q2 = np.mean(Q2, axis=0)
-
-        state1 = I1 + 1j * Q1
-        # state2 = I2 + 1j * Q2
-
-        # diff = state1 - state2
-
-        # state1 = np.abs(state1)
-        # state2 = np.abs(state2)
-
-        # diff = np.abs(diff)
-
-        # # find max freq of diff
-        # max_freq = frequencies[np.argmax(diff)]
-        # print(max_freq)
-
-        # plt.plot(frequencies, state1)
-        # plt.plot(frequencies, state2)
-        # plt.plot(frequencies, diff)
-        # plt.axvline(max_freq, color="r", label="max diff")
-        # plt.axvline(resonator_freq, color="g", label="current freq")
-        # plt.legend()
-        # plt.show()
+    # experiment.run()
+    # plt.show()
