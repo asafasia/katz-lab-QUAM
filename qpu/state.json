@@ -28,6 +28,10 @@
                         "__class__": "quam.components.hardware.LocalOscillator"
                     },
                     "mixer": {
+                        "local_oscillator_frequency": 4500000000,
+                        "intermediate_frequency": 93236900,
+                        "correction_gain": -0.03566545454545449,
+                        "correction_phase": -0.24667636363636358,
                         "__class__": "quam.components.hardware.Mixer"
                     },
                     "__class__": "quam.components.hardware.FrequencyConverter"
@@ -75,6 +79,10 @@
                         "__class__": "quam.components.hardware.LocalOscillator"
                     },
                     "mixer": {
+                        "local_oscillator_frequency": 7610000000,
+                        "intermediate_frequency": 24436473,
+                        "correction_gain": 0.030080000000000016,
+                        "correction_phase": -0.09290181818181818,
                         "__class__": "quam.components.hardware.Mixer"
                     },
                     "__class__": "quam.components.hardware.FrequencyConverter"

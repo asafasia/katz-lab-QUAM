@@ -24,7 +24,7 @@ from qualang_tools.units import unit
 
 
 qpu_config = QPUConfig.from_dict()
-qubit_name = "q10"
+# qubit_name = "q10"
 q10_params = qpu_config.nodes[qubit_name]
 
 u = unit(coerce_to_integer=True)

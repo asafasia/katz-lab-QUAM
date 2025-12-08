@@ -13,12 +13,10 @@ from params import QPUConfig
 from qualang_tools.units import unit
 
 
-u = unit(coerce_to_integer=True)
-
-params = QPUConfig()
+# u = unit(coerce_to_integer=True)
 
 
-def create_machine(params):
+def create_machine(params: QPUConfig):
     machine = Quam()
     controller = "con1"
     transmon = Transmon(id="10")
@@ -32,7 +30,12 @@ def create_machine(params):
         opx_output_offset_I=qubit_params.IQ_bias.I,
         opx_output_offset_Q=qubit_params.IQ_bias.Q,
         frequency_converter_up=FrequencyConverter(
-            mixer=Mixer(),
+            mixer=Mixer(
+                local_oscillator_frequency=qubit_params.qubit_LO,
+                intermediate_frequency=qubit_params.IF_freq,
+                correction_gain=qubit_params.correction_gain,
+                correction_phase=qubit_params.correction_phase,
+            ),
             local_oscillator=LocalOscillator(frequency=qubit_params.qubit_LO),
         ),
         intermediate_frequency=qubit_params.IF_freq,
@@ -47,7 +50,12 @@ def create_machine(params):
         opx_output_offset_I=resonator_params.IQ_bias.I,
         opx_output_offset_Q=resonator_params.IQ_bias.Q,
         frequency_converter_up=FrequencyConverter(
-            mixer=Mixer(),
+            mixer=Mixer(
+                local_oscillator_frequency=resonator_params.resonator_LO,
+                intermediate_frequency=resonator_params.IF_freq,
+                correction_gain=resonator_params.correction_gain,
+                correction_phase=resonator_params.correction_phase,
+            ),
             local_oscillator=LocalOscillator(frequency=resonator_params.resonator_LO),
         ),
         time_of_flight=resonator_params.time_of_flight,
@@ -55,11 +63,10 @@ def create_machine(params):
         intermediate_frequency=resonator_params.IF_freq,
     )
 
-    # Assuming qubit_xy is configured as an IQChannel
     transmon.xy.operations["X180"] = pulses.SquarePulse(
         length=gates.square_gate.length,
         amplitude=gates.square_gate.amplitude,
-        axis_angle=0,  # Phase angle on the IQ plane
+        axis_angle=0,
     )
 
     transmon.resonator.operations["readout"] = pulses.SquareReadoutPulse(
@@ -75,10 +82,11 @@ def create_machine(params):
 
 if __name__ == "__main__":
 
+    params = QPUConfig()
+
     machine = create_machine(params)
 
     machine.save()
     config = machine.generate_config()
 
     machine.load()
-
