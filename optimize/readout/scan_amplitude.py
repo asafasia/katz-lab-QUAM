@@ -54,13 +54,13 @@ class ScanAmplitude:
         plt.grid()
 
         from scipy.ndimage import gaussian_filter
-        fidelities_smooth = gaussian_filter(fidelities, sigma=2)
+        fidelities_smooth = gaussian_filter(fidelities, sigma=1)
 
 
         plt.plot(amplitudes, fidelities)
         plt.plot(amplitudes, fidelities_smooth)
         
-        plt.plot(amplitudes[np.argmax(fidelities_smooth)], fidelities[np.argmax(fidelities_smooth)], "ro")
+        plt.plot(amplitudes[np.argmax(fidelities_smooth)], fidelities_smooth[np.argmax(fidelities_smooth)], "ro")
 
         plt.xlabel("Amplitude")
         plt.ylabel("Fidelity")
