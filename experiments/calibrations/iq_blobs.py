@@ -21,16 +21,20 @@ class IQBlobsOptions(Options):
 
 
 class IQBlobsExperiment(BaseExperiment):
-    def __init__(self, qubit, options=None, params=None):
+    def __init__(
+        self,
+        qubit,
+        options: IQBlobsOptions = IQBlobsOptions(),
+        params: QPUConfig = None,
+    ):
 
-        if options is None:
-            options = IQBlobsOptions()
-        super().__init__(qubit, options, params)
+        super().__init__(qubit=qubit, options=options, params=params)
 
     def define_program(self):
         self.program = _program(self.qubit, self.options)
 
     def execute_program(self):
+        self.qm = self.qmm.open_qm(self.config)
         job = self.qm.execute(self.program)
         variable_list = ["Ig", "Qg", "Ie", "Qe"]
         results = fetching_tool(job, data_list=variable_list)
@@ -74,23 +78,24 @@ class IQBlobsExperiment(BaseExperiment):
         pass
 
 
-def _program(qubit, n_avg, thermalization):
+def _program(qubit, options):
     rr = qubit.resonator
+    thermalization = 100 * u.us
 
     with program() as iq_blobs:
 
         n = declare(int)
         shot = declare(int)
-        # Ig = declare(fixed)
-        # Qg = declare(fixed)
-        # Ie = declare(fixed)
-        # Qe = declare(fixed)
+        Ig = declare(fixed)
+        Qg = declare(fixed)
+        Ie = declare(fixed)
+        Qe = declare(fixed)
         Ig_st = declare_stream()
         Qg_st = declare_stream()
         Ie_st = declare_stream()
         Qe_st = declare_stream()
 
-        with for_(n, 0, n < n_avg, n + 1):
+        with for_(n, 0, n < options.n_avg, n + 1):
             # ----------- Ground measurement ---------------
             rr.measure("readout", qua_vars=(Ig, Qg))
             save(Ig, Ig_st)
@@ -109,10 +114,10 @@ def _program(qubit, n_avg, thermalization):
             wait(thermalization, rr.name)
 
         with stream_processing():
-            Ig_st.buffer(n_avg).save("Ig")
-            Qg_st.buffer(n_avg).save("Qg")
-            Ie_st.buffer(n_avg).save("Ie")
-            Qe_st.buffer(n_avg).save("Qe")
+            Ig_st.buffer(options.n_avg).save("Ig")
+            Qg_st.buffer(options.n_avg).save("Qg")
+            Ie_st.buffer(options.n_avg).save("Ie")
+            Qe_st.buffer(options.n_avg).save("Qe")
 
     return iq_blobs
 
@@ -123,10 +128,14 @@ if __name__ == "__main__":
 
     qubit = "q10"
 
+    options = IQBlobsOptions()
+    options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.01
-    params.qubits[qubit].gates.readout_pulse.length = 1000 * u.ns
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.02
+    params.qubits[qubit].gates.readout_pulse.length = 3000 * u.ns
 
-    experiment = IQBlobsExperiment(qubit, params)
-    
-    # experiment.run()
+    experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
+
+    experiment.run()
+
+    plt.show()

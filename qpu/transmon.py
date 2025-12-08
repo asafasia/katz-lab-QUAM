@@ -81,3 +81,4 @@ if __name__ == "__main__":
     config = machine.generate_config()
 
     machine.load()
+

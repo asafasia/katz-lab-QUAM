@@ -13,19 +13,16 @@ class BaseExperiment(ABC):
         self,
         qubit: str,
         options: Options,
-        params: QPUConfig = None,
+        params: QPUConfig = QPUConfig(),
     ):
         self.qubit_id = qubit
-        self.qubit_num = int(qubit[1:])
+        self.qubit_num = self.qubit_id[1:]
         self.data = dict()
         self.program = None
         self.options = options
         self.params = params
 
         self.qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
-
-        if params is None:
-            params = QPUConfig()
 
         self.machine = create_machine(params)
         self.config = self.machine.generate_config()

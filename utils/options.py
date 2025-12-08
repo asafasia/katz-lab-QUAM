@@ -7,4 +7,4 @@ from typing import Optional, Dict, Any
 class Options:
     n_avg: int = 200
     simulate: bool = False
-
+    dc_set_voltage: bool = False

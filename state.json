@@ -6,7 +6,7 @@
                 "operations": {
                     "X180": {
                         "length": 40,
-                        "amplitude": 0.0,
+                        "amplitude": 0.06576319751403452,
                         "axis_angle": 0,
                         "__class__": "quam.components.pulses.SquarePulse"
                     }
@@ -37,12 +37,12 @@
             "resonator": {
                 "operations": {
                     "readout": {
-                        "length": 1000,
-                        "amplitude": 0.1,
+                        "length": 2000,
+                        "amplitude": 0.07,
                         "integration_weights": [
                             [
                                 1,
-                                500
+                                1000
                             ]
                         ],
                         "__class__": "quam.components.pulses.SquareReadoutPulse"
