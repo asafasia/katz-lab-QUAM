@@ -15,7 +15,8 @@ class BaseExperiment(ABC):
         options: Options,
         params: QPUConfig = None,
     ):
-
+        self.qubit_id = qubit
+        self.qubit_num = int(qubit[1:])
         self.data = dict()
         self.program = None
         self.options = options
@@ -29,7 +30,7 @@ class BaseExperiment(ABC):
         self.machine = create_machine(params)
         self.config = self.machine.generate_config()
 
-        self.qubit = self.machine.qubits[qubit]
+        self.qubit = self.machine.qubits[self.qubit_num]
 
     @abstractmethod
     def define_program(self):

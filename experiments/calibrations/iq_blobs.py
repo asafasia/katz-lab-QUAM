@@ -128,4 +128,5 @@ if __name__ == "__main__":
     params.qubits[qubit].gates.readout_pulse.length = 1000 * u.ns
 
     experiment = IQBlobsExperiment(qubit, params)
-    experiment.run()
+    
+    # experiment.run()
