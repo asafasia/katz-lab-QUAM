@@ -13,7 +13,7 @@ from params import QPUConfig
 from qualang_tools.units import unit
 
 
-# u = unit(coerce_to_integer=True)
+u = unit(coerce_to_integer=True)
 
 
 def create_machine(params: QPUConfig):

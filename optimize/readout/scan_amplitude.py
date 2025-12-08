@@ -4,23 +4,36 @@ from utils import Options
 from params import QPUConfig
 
 from experiments.calibrations.iq_blobs import IQBlobsExperiment, IQBlobsOptions
+from qpu.transmon import u
 
 
 class ScanAmplitude:
-    def __init__(self, qubit: str, options: Options, params: QPUConfig = QPUConfig()):
+    def __init__(
+        self,
+        qubit: str,
+        options: Options,
+        amplitudes: np.ndarray,
+        params: QPUConfig = QPUConfig(),
+    ):
         self.qubit = qubit
         self.options = options
         self.params = params
-        self.data
+        self.data = dict()
+        self.amplitudes = amplitudes
 
     def run(self):
         self.data["amplitudes"] = self.amplitudes
         self.data["fidelities"] = []
-        for amplitude in np.linspace(0, 0.1, 10):
+
+        options = IQBlobsOptions()
+        options.simulate = False
+        options.n_avg = 2000
+        options.plot = False
+
+        for amplitude in self.amplitudes:
+            print(f"Amplitude: {amplitude}")
             self._update_amplitude(amplitude)
-            iqblobs_experiment = IQBlobsExperiment(
-                self.qubit, self.options, self.params
-            )
+            iqblobs_experiment = IQBlobsExperiment(self.qubit, options, self.params)
             iqblobs_experiment.run()
             data = iqblobs_experiment.data
             self.data["fidelities"].append(data["fidelity"])
@@ -33,7 +46,21 @@ class ScanAmplitude:
     def plot_results(self):
         import matplotlib.pyplot as plt
 
-        plt.plot(self.data["amplitudes"], self.data["fidelities"])
+        amplitudes = self.data["amplitudes"]
+        fidelities = self.data["fidelities"]
+
+        plt.figure(figsize=(10, 5))
+        plt.title("Scan Amplitude")
+        plt.grid()
+
+        fidelities_smooth = np.convolve(fidelities, np.ones(5) / 5, mode="valid")
+
+
+        plt.plot(amplitudes, fidelities)
+        plt.plot(amplitudes, fidelities_smooth)
+        
+        plt.plot(amplitudes[np.argmax(fidelities_smooth)], fidelities[np.argmax(fidelities_smooth)], "ro")
+
         plt.xlabel("Amplitude")
         plt.ylabel("Fidelity")
         plt.show()
@@ -41,6 +68,9 @@ class ScanAmplitude:
 
 if __name__ == "__main__":
 
-    amplitudes = np.linspace(0, 0.1, 10)
-    scan_amplitude = ScanAmplitude("q10", Options())
+    amplitudes = np.linspace(0, 0.15, 30)
+    scan_amplitude = ScanAmplitude(
+        qubit="q10", options=Options(), amplitudes=amplitudes
+    )
     scan_amplitude.run()
+    scan_amplitude.plot_results()
