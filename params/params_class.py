@@ -215,10 +215,10 @@ class QPUConfig:
                 correction_phase=hardware_r.get("correction_phase"),
                 resonator_LO=hardware_r.get("LO_frequency"),
                 resonator_freq=calibrations_r.get("resonator_freq"),
-                time_of_flight=hardware_r.get("time_of_flight"),
-                smearing=hardware_r.get("smearing"),
-                rotation_angle=hardware_r.get("rotation_angle"),
-                threshold=hardware_r.get("threshold"),
+                time_of_flight=calibrations_r.get("time_of_flight"),
+                smearing=calibrations_r.get("smearing"),
+                rotation_angle=calibrations_r.get("rotation_angle"),
+                threshold=calibrations_r.get("threshold"),
             )
 
             # # # ---- gates ----

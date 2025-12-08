@@ -7,7 +7,6 @@
                     "X180": {
                         "length": 40,
                         "amplitude": 0.06576319751403452,
-                        "axis_angle": 0,
                         "__class__": "quam.components.pulses.SquarePulse"
                     },
                     "saturation": {
@@ -17,7 +16,7 @@
                         "__class__": "quam.components.pulses.SquarePulse"
                     }
                 },
-                "intermediate_frequency": -97236900,
+                "intermediate_frequency": 93246900,
                 "opx_output_I": [
                     "con1",
                     3
@@ -35,7 +34,7 @@
                     },
                     "mixer": {
                         "local_oscillator_frequency": 4500000000,
-                        "intermediate_frequency": -97236900,
+                        "intermediate_frequency": 93246900,
                         "correction_gain": -0.035665,
                         "correction_phase": -0.246676,
                         "__class__": "quam.components.hardware.Mixer"
@@ -49,6 +48,7 @@
                     "readout": {
                         "length": 2000,
                         "amplitude": 0.07,
+                        "axis_angle": 90,
                         "integration_weights": [
                             [
                                 1,
@@ -59,7 +59,7 @@
                     }
                 },
                 "id": "10",
-                "intermediate_frequency": 24436473,
+                "intermediate_frequency": 24836473,
                 "opx_input_I": [
                     "con1",
                     1
@@ -86,7 +86,7 @@
                     },
                     "mixer": {
                         "local_oscillator_frequency": 7610000000,
-                        "intermediate_frequency": 24436473,
+                        "intermediate_frequency": 24836473,
                         "correction_gain": 0.030080000000000016,
                         "correction_phase": -0.09290181818181818,
                         "__class__": "quam.components.hardware.Mixer"

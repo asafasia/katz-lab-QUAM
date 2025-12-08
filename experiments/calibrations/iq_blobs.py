@@ -82,7 +82,7 @@ class IQBlobsExperiment(BaseExperiment):
 
 def _program(qubit, options):
     rr = qubit.resonator
-    thermalization = 100 * u.us
+    thermalization = 300 * u.us
 
     with program() as iq_blobs:
 
@@ -133,8 +133,8 @@ if __name__ == "__main__":
     options = IQBlobsOptions()
     options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.07
-    params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
+    # params.qubits[qubit].gates.readout_pulse.amplitude = 0.07
+    # params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
 

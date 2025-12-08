@@ -225,8 +225,6 @@ if __name__ == "__main__":
     options.simulate = False
     params = QPUConfig()
 
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
-    params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     span = 20e6
     N = 100

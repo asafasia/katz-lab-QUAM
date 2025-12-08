@@ -95,14 +95,12 @@ class QubitSpectroscopyExperiment(BaseExperiment):
         I = self.data["I"]
         Q = self.data["Q"]
 
-        states = I + 1j * Q
 
-        print(states)
 
-        self.data["state"] = states
+        self.data["state"] = I
         self.data["frequencies"] = self.frequencies_RF
 
-        max_freq = np.argmin(np.abs(states))
+        max_freq = np.argmin(np.abs(I))
         self.data["max_freq"] = self.frequencies_RF[max_freq]
 
     # --------------------------------------------------
@@ -182,10 +180,10 @@ if __name__ == "__main__":
     params = QPUConfig()
 
     # Example: adjust saturation pulse from params if you want
-    params.qubits[qubit].gates.saturation_pulse.amplitude = 0.0001
+    params.qubits[qubit].gates.saturation_pulse.amplitude = 0.001
     params.qubits[qubit].gates.saturation_pulse.length = 100 * u.us
 
-    span = 1 * u.MHz
+    span = 10 * u.MHz
     N = 100
     df = span // N
     frequencies = np.arange(-span / 2, span / 2, df)

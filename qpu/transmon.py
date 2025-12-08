@@ -53,7 +53,9 @@ def create_machine(params: QPUConfig):
                 correction_gain=resonator_params.correction_gain,
                 correction_phase=resonator_params.correction_phase,
             ),
-            local_oscillator=LocalOscillator(frequency=resonator_params.resonator_LO,power=10),
+            local_oscillator=LocalOscillator(
+                frequency=resonator_params.resonator_LO, power=10
+            ),
         ),
         # time_of_flight=resonator_params.time_of_flight,
         # smearing=resonator_params.smearing,
@@ -63,7 +65,6 @@ def create_machine(params: QPUConfig):
     transmon.xy.operations["X180"] = pulses.SquarePulse(
         length=gates.square_gate.length,
         amplitude=gates.square_gate.amplitude,
-        axis_angle=0,
     )
 
     transmon.xy.operations["saturation"] = pulses.SquarePulse(
@@ -76,6 +77,7 @@ def create_machine(params: QPUConfig):
         length=gates.readout_pulse.length,
         amplitude=gates.readout_pulse.amplitude,
         integration_weights=[(1, gates.readout_pulse.length)],
+        axis_angle=90,
     )
 
     machine.qubits[transmon.name] = transmon
@@ -99,5 +101,6 @@ if __name__ == "__main__":
     pprint(config)
     # machine.load()
 
-
     print(machine.qubits["10"].xy.inferred_intermediate_frequency)
+
+

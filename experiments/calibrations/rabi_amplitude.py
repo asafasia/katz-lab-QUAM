@@ -28,7 +28,7 @@ class PowerRabiExperiment(BaseExperiment):
     ):
         super().__init__(qubit, options, params)
 
-        print(self.params.qubits["q10"].gates.square_gate.amplitude)
+        print(self.params.qubits['q10'].resonator.threshold)
         self.amplitudes = amplitudes
         self.state_discrimination = False
         self.rabi_amp = self.params.qubits["q10"].gates.square_gate.amplitude
@@ -39,8 +39,10 @@ class PowerRabiExperiment(BaseExperiment):
             a = declare(fixed)
             I = declare(fixed)
             Q = declare(fixed)
+            state = declare(fixed)
             I_st = declare_stream()
             Q_st = declare_stream()
+            state_st = declare_stream()
             n_st = declare_stream()
 
             with for_(n, 0, n < self.options.n_avg, n + 1):
@@ -52,16 +54,22 @@ class PowerRabiExperiment(BaseExperiment):
 
                     rr.measure("readout", qua_vars=(I, Q))
                     rr.wait(300 * u.us)
-
+                    threshold = self.params.qubits['q10'].resonator.threshold
+                    with if_(I > threshold):
+                        assign(1, state)
+                    with else_():
+                        assign(0, state)
 
                     save(I, I_st)
                     save(Q, Q_st)
+                    save(state, state_st)
 
                 save(n, n_st)
 
             with stream_processing():
                 I_st.buffer(len(self.amplitudes)).average().save("I")
                 Q_st.buffer(len(self.amplitudes)).average().save("Q")
+                state_st.buffer(len(self.amplitudes)).average().save("state")
                 n_st.save("iteration")
 
         self.program = power_rabi
@@ -70,12 +78,12 @@ class PowerRabiExperiment(BaseExperiment):
 
         qm = self.qmm.open_qm(self.config)
         self.job = qm.execute(self.program)
-        variable_list = ["I", "Q", "iteration"]
+        variable_list = ["I", "Q", "state", "iteration"]
 
         results = fetching_tool(self.job, data_list=variable_list, mode="live")
 
         while results.is_processing():
-            I, Q, iteration = results.fetch_all()
+            I, Q, state, iteration = results.fetch_all()
 
             progress_counter(
                 iteration, self.options.n_avg, start_time=results.get_start_time()
@@ -84,11 +92,12 @@ class PowerRabiExperiment(BaseExperiment):
         self.results = results
 
     def analyze_results(self):
-        I, Q, iteration = self.results.fetch_all()
+        I, Q, state, iteration = self.results.fetch_all()
 
         self.data["amplitudes"] = self.amplitudes
         self.data["I"] = I
         self.data["Q"] = Q
+        self.data["state"] = state
 
         if self.options.state_discrimination:
             self.y = state
@@ -124,9 +133,13 @@ class PowerRabiExperiment(BaseExperiment):
         amplitudes = self.data["amplitudes"]
         I = self.data["I"]
         Q = self.data["Q"]
+        state = self.data["state"]
 
-        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, Q, ".")
+        # plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, Q, ".")
         plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, I, ".")
+        plt.show()
+        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, ".")
+        plt.show()
         plt.title("Power Rabi g->e transition")
         plt.xlabel("Rabi amplitude (mV)")
         plt.ylabel("state")
@@ -142,7 +155,7 @@ class PowerRabiExperiment(BaseExperiment):
 if __name__ == "__main__":
     qubit = "q10"
     options = OptionsPowerRabi()
-    options.n_avg = 400
+    options.n_avg = 200
     options.n_a = 100
     options.num_pis = 4
     options.state_discrimination = False
