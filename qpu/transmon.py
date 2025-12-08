@@ -69,7 +69,7 @@ def create_machine(params: QPUConfig):
     transmon.resonator.operations["readout"] = pulses.SquareReadoutPulse(
         length=gates.readout_pulse.length,
         amplitude=gates.readout_pulse.amplitude,
-        integration_weights=[(1, gates.readout_pulse.length // 2)],
+        integration_weights=[(1, gates.readout_pulse.length)],
     )
 
     machine.qubits[transmon.name] = transmon

@@ -46,7 +46,7 @@
                         "integration_weights": [
                             [
                                 1,
-                                1000
+                                2000
                             ]
                         ],
                         "__class__": "quam.components.pulses.SquareReadoutPulse"
