@@ -66,6 +66,12 @@ def create_machine(params: QPUConfig):
         axis_angle=0,
     )
 
+    transmon.xy.operations["saturation"] = pulses.SquarePulse(
+        length=gates.saturation_pulse.length,
+        amplitude=gates.saturation_pulse.amplitude,
+        axis_angle=0,
+    )
+
     transmon.resonator.operations["readout"] = pulses.SquareReadoutPulse(
         length=gates.readout_pulse.length,
         amplitude=gates.readout_pulse.amplitude,
