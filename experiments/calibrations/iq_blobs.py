@@ -22,6 +22,7 @@ class IQBlobsOptions(Options):
 
 class IQBlobsExperiment(BaseExperiment):
     def __init__(self, qubit, options=None):
+
         if options is None:
             options = IQBlobsOptions()
         super().__init__(qubit, options)
@@ -36,7 +37,17 @@ class IQBlobsExperiment(BaseExperiment):
         pass
 
     def plot_results(self):
-        pass
+        results = fetching_tool(job, ["Ig", "Qg", "Ie", "Qe"])
+        Ig, Qg, Ie, Qe = results.fetch_all()
+
+        Ig = np.array(Ig)
+        Qg = np.array(Qg)
+        Ie = np.array(Ie)
+        Qe = np.array(Qe)
+
+        angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
+            Ig, Qg, Ie, Qe, b_print=True, b_plot=True
+        )
 
     def save_results(self):
         pass
@@ -91,46 +102,3 @@ def _program(qubit, n_avg, thermalization):
 if __name__ == "__main__":
     experiment = IQBlobsExperiment("q10")
     experiment.run()
-
-# # -------------------------------------------------------------------------
-# # RUN
-# # -------------------------------------------------------------------------
-# if __name__ == "__main__":
-
-#     qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
-#     qm = qmm.open_qm(qua_config)
-
-#     if simulate:
-#         job = qm.simulate(iq_blobs, SimulationConfig(duration=10 * u.us))
-#         job.get_simulated_samples().con1.plot()
-#         plt.show()
-#     else:
-#         job = qm.execute(iq_blobs)
-
-#         results = fetching_tool(job, ["Ig", "Qg", "Ie", "Qe"])
-#         Ig, Qg, Ie, Qe = results.fetch_all()
-
-#         # ---------------------------------------------------
-#         #   PROCESSING
-#         #   Ig/Qg: shape = [freq, n_avg, shots]
-#         # ---------------------------------------------------
-#         Ig = np.array(Ig)
-#         Qg = np.array(Qg)
-#         Ie = np.array(Ie)
-#         Qe = np.array(Qe)
-
-#         # collapse n_avg dimension → all shots in one dimension
-
-#         # choose frequency with biggest separation
-
-#         # select best frequency IQ data
-
-#         # ---------------------------------------------------
-#         #       PLOT IQ BLOBS
-#         # ---------------------------------------------------
-
-#         angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
-#             Ig, Qg, Ie, Qe, b_print=True, b_plot=True
-#         )
-
-#         plt.show()
