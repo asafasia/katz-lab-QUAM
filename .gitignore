@@ -1,3 +1,13 @@
 .venv/
 .venv
 .__pycache__
+__pycache__/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+**/__pycache__/
+**/*.pyc

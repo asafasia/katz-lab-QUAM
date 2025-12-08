@@ -13,7 +13,7 @@ from qualang_tools.multi_user import qm_session
 from qualang_tools.units import unit
 
 from qualibrate import QualibrationNode
-from quam_config import Quam
+from qpu.transmon import Quam
 from calibration_utils.resonator_sepctroscopy import (
     Parameters,
     process_raw_dataset,
