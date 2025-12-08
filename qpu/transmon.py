@@ -88,4 +88,7 @@ if __name__ == "__main__":
     machine.save(path)
     config = machine.generate_config()
 
+    from pprint import pprint
+
+    pprint(config)
     # machine.load()
