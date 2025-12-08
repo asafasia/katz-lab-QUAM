@@ -11,13 +11,15 @@ from qpu.config import *
 from qualang_tools.analysis.discriminator import two_state_discriminator
 from experiments.core.base_experiment import BaseExperiment
 from utils import Options
-
+from dataclasses import dataclass
 
 # -------------------------------------------------------------------------
 # PARAMETERS
 # -------------------------------------------------------------------------
+@dataclass
 class IQBlobsOptions(Options):
-    pass
+    n_avg: int = 2000
+
 
 
 class IQBlobsExperiment(BaseExperiment):
@@ -131,8 +133,8 @@ if __name__ == "__main__":
     options = IQBlobsOptions()
     options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.02
-    params.qubits[qubit].gates.readout_pulse.length = 3000 * u.ns
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
+    params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
 
