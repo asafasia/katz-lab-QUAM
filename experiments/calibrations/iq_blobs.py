@@ -9,10 +9,35 @@ from qpu.transmon import *
 from qpu.config import *
 
 from qualang_tools.analysis.discriminator import two_state_discriminator
-
+from experiments.core.base_experiment import BaseExperiment
 # -------------------------------------------------------------------------
 # PARAMETERS
 # -------------------------------------------------------------------------
+
+class IQBlobsExperiment(BaseExperiment):
+    def __init__(self,qubit, options):
+        self.qubit = qubit
+        self.options = options
+
+    def run(self):
+        pass
+
+    def analyze(self):
+        pass
+
+    def plot(self):
+        pass
+
+    def save(self):
+        pass
+
+    
+
+    
+
+
+
+
 n_avg = 2000
 thermalization = 3 * u.us
 
