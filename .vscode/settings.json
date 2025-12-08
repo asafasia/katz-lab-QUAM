@@ -5,7 +5,8 @@
     "**/.gitignore": true,
     "**/.vscode": true,
     "**/__pycache__": true
-  }
+  },
+  "editor.formatOnPaste": false
 }
 
 

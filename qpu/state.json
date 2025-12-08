@@ -1,0 +1,63 @@
+{
+    "qubits": {
+        "10": {
+            "id": "10",
+            "xy": {
+                "intermediate_frequency": 93236900,
+                "opx_output_I": [
+                    "con1",
+                    3
+                ],
+                "opx_output_Q": [
+                    "con1",
+                    4
+                ],
+                "frequency_converter_up": {
+                    "local_oscillator": {
+                        "frequency": 4500000000,
+                        "__class__": "quam.components.hardware.LocalOscillator"
+                    },
+                    "mixer": {
+                        "__class__": "quam.components.hardware.Mixer"
+                    },
+                    "__class__": "quam.components.hardware.FrequencyConverter"
+                },
+                "__class__": "quam.components.channels.IQChannel"
+            },
+            "resonator": {
+                "id": "10",
+                "intermediate_frequency": 24436473,
+                "opx_input_I": [
+                    "con1",
+                    1
+                ],
+                "opx_input_Q": [
+                    "con1",
+                    2
+                ],
+                "time_of_flight": 340,
+                "opx_output_I": [
+                    "con1",
+                    1
+                ],
+                "opx_output_Q": [
+                    "con1",
+                    2
+                ],
+                "frequency_converter_up": {
+                    "local_oscillator": {
+                        "frequency": 7610000000,
+                        "__class__": "quam.components.hardware.LocalOscillator"
+                    },
+                    "mixer": {
+                        "__class__": "quam.components.hardware.Mixer"
+                    },
+                    "__class__": "quam.components.hardware.FrequencyConverter"
+                },
+                "__class__": "quam.components.channels.InOutIQChannel"
+            },
+            "__class__": "quam.examples.superconducting_qubits.components.Transmon"
+        }
+    },
+    "__class__": "quam.examples.superconducting_qubits.components.Quam"
+}

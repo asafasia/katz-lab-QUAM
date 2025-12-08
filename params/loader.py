@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
-ARGS_PATH = "params/params.json"
+BASE_DIR = Path(__file__).resolve().parent
+
+ARGS_PATH = BASE_DIR / "params.json"
 
 
 class Params:

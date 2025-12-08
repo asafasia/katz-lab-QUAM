@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
-from params.params import Params
+from params import Params
 
 # ---------- Basic Structures ----------
 
@@ -91,6 +91,10 @@ class QubitConfig:
     T2: float
     thermalization_time: float
 
+    @property
+    def IF_freq(self) -> float:
+        return self.qubit_LO - self.qubit_ge_freq
+
 
 # ---------- Resonator Block ----------
 
@@ -110,6 +114,10 @@ class ResonatorConfig:
     rotation_angle: float
     threshold: float
 
+    @property
+    def IF_freq(self) -> float:
+        return self.resonator_LO - self.resonator_freq
+
 
 # ---------- Top-level QPU Object ----------
 
@@ -126,10 +134,14 @@ class QPUConfig:
     A dictionary of qubit IDs ("q10", "q11", ...) → QPUNode
     """
 
-    nodes: Dict[str, QPUNode]
+    qubits: Dict[str, QPUNode]
+
+    def __init__(self):
+
+        self.qubits = self._from_dict()
 
     @staticmethod
-    def from_dict(data: Dict[str, Any] = None) -> "QPUConfig":
+    def _from_dict(data: Dict[str, Any] = None):
 
         if data is None:
             data = Params().__dict__["data"]
@@ -180,7 +192,7 @@ class QPUConfig:
                 ),
             )
 
-        return QPUConfig(nodes=parsed)
+        return parsed
 
     def qubit_IF_freq(self, qubit_name: str) -> float:
         qubit_LO = self.nodes[qubit_name].qubit.qubit_LO
@@ -195,9 +207,9 @@ class QPUConfig:
 
 if __name__ == "__main__":
 
-    qpu_config = QPUConfig.from_dict()
+    qpu_config = QPUConfig()
 
     # Example: access q10
-    q10_params = qpu_config.nodes["q10"]
-    print(q10_params.qubit.qubit_ge_freq)
-    print(q10_params.resonator.resonator_freq)
+    q10_params = qpu_config.qubits["q10"]
+
+    print(q10_params.resonator.IF_freq)
