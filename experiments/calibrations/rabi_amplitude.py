@@ -144,11 +144,11 @@ if __name__ == "__main__":
     options = OptionsPowerRabi()
     options.n_avg = 400
     options.n_a = 100
-    options.num_pis = 8
+    options.num_pis = 4
     options.state_discrimination = False
-    options.simulate = True
+    options.simulate = False
 
-    amps = np.linspace(0.5, 1, 100)
+    amps = np.linspace(0, 1, 100)
     experiment = PowerRabiExperiment(
         qubit=qubit, options=options, amplitudes=amps, params=QPUConfig()
     )

@@ -36,12 +36,14 @@ class QubitSpectroscopyExperiment(BaseExperiment):
         params: QPUConfig = None,
     ):
         super().__init__(qubit=qubit, options=options, params=params)
+
+        qubit_LO = self.qubit.xy.LO_frequency
+        qubit_IF = self.qubit.xy.intermediate_frequency
+        self.qubit_RF = qubit_LO - qubit_IF
+
         self.frequencies = frequencies
-        qubit_LO = qubit.frequency_converter_up.LO_frequency
-        qubit_RF = qubit.RF_frequency
-        qubit_IF = qubit_LO - qubit_RF
-        self.frequencies_IF = qubit_IF + self.frequencies
-        # self.frequencies_RF = qubit_LO - self.frequencies
+        self.frequencies_IF = frequencies + qubit_IF
+        self.frequencies_RF = -frequencies + self.qubit_RF
 
     # --------------------------------------------------
     # QUA program
@@ -68,23 +70,19 @@ class QubitSpectroscopyExperiment(BaseExperiment):
             self.data = {"simulation": job.get_simulated_samples()}
         else:
             job = self.qm.execute(self.program)
-            variable_list = ["I1", "Q1", "I2", "Q2"]
+            variable_list = ["I", "Q"]
             results = fetching_tool(job, data_list=variable_list)
 
-            I1, Q1, I2, Q2 = results.fetch_all()
+            I, Q = results.fetch_all()
 
             # Average over shots (n_avg)
-            I1 = np.mean(I1, axis=0)
-            Q1 = np.mean(Q1, axis=0)
-            I2 = np.mean(I2, axis=0)
-            Q2 = np.mean(Q2, axis=0)
+            I = np.mean(I, axis=0)
+            Q = np.mean(Q, axis=0)
 
             self.data = {
-                "frequencies": self.frequencies,
-                "I1": I1,
-                "Q1": Q1,
-                "I2": I2,
-                "Q2": Q2,
+                "frequencies": self.frequencies_RF,
+                "I": I,
+                "Q": Q,
             }
 
     # --------------------------------------------------
@@ -94,57 +92,38 @@ class QubitSpectroscopyExperiment(BaseExperiment):
         if self.options.simulate:
             return
 
-        freqs = self.data["frequencies"]
-        I1 = self.data["I1"]
-        Q1 = self.data["Q1"]
-        I2 = self.data["I2"]
-        Q2 = self.data["Q2"]
+        I = self.data["I"]
+        Q = self.data["Q"]
 
-        state1 = I1 + 1j * Q1
-        state2 = I2 + 1j * Q2
+        states = I + 1j * Q
 
-        amp1 = np.abs(state1)
-        amp2 = np.abs(state2)
-        diff = np.abs(state1 - state2)
+        print(states)
 
-        idx_max = int(np.argmax(diff))
-        f_max = float(freqs[idx_max])
+        self.data["state"] = states
+        self.data["frequencies"] = self.frequencies_RF
 
-        self.data["state1"] = state1
-        self.data["state2"] = state2
-        self.data["amp1"] = amp1
-        self.data["amp2"] = amp2
-        self.data["diff"] = diff
-        self.data["f_max"] = f_max
-        self.data["idx_max"] = idx_max
+        max_freq = np.argmin(np.abs(states))
+        self.data["max_freq"] = self.frequencies_RF[max_freq]
 
     # --------------------------------------------------
     # Plotting
     # --------------------------------------------------
     def plot_results(self):
-        if self.options.simulate:
-            # Plot the simulated samples (same style as your script)
-            sim = self.data["simulation"]
-            sim.con1.plot()
-            return
 
         freqs = self.data["frequencies"]
-        amp1 = self.data["amp1"]
-        amp2 = self.data["amp2"]
-        diff = self.data["diff"]
-        f_max = self.data["f_max"]
+        states = self.data["state"]
+        max_freq = self.data["max_freq"]
+        print(int(max_freq))
 
         plt.figure()
-        plt.plot(freqs, amp1, label="|state1| (ground)")
-        plt.plot(freqs, amp2, label="|state2| (excited)")
-        plt.plot(freqs, diff, label="|state1 - state2|")
-
-        plt.axvline(f_max, linestyle="--", label=f"max diff: {f_max/1e9:.6f} GHz")
-
+        plt.plot(freqs, np.abs(states), label="|state|")
+        plt.axvline(max_freq, color="r", linestyle="--", label="max_freq")
+        plt.axvline(self.qubit_RF, color="g", linestyle="--", label="current qubit freq")
         plt.xlabel("Frequency [Hz]")
-        plt.ylabel("Amplitude")
+        plt.ylabel("state")
         plt.legend()
         plt.grid(True)
+        plt.show()
 
     def save_results(self):
         # TODO: hook into your usual saving mechanism
@@ -175,17 +154,17 @@ def _program(qubit, options: QubitSpecOptions, frequencies_IF):
         with for_(n, 0, n < n_avg, n + 1):
             with for_(*from_array(f, frequencies_IF)):
                 # ---------- Ground state measurement ----------
+                qubit.xy.update_frequency(f)
+                qubit.xy.play("saturation")
                 qubit.xy.align()
-                qubit.update_frequency(f)
-                qubit.xy.play("saturation", duration=10 * u.us)
                 rr.measure("readout", qua_vars=(I, Q))
                 rr.wait(300 * u.us)
                 save(I, I_st)
                 save(Q, Q_st)
 
         with stream_processing():
-            I_st.buffer(len(frequencies_IF)).buffer(n_avg).save("I1")
-            Q_st.buffer(len(frequencies_IF)).buffer(n_avg).save("Q1")
+            I_st.buffer(len(frequencies_IF)).buffer(n_avg).save("I")
+            Q_st.buffer(len(frequencies_IF)).buffer(n_avg).save("Q")
 
     return resonator_spec
 
@@ -197,15 +176,16 @@ if __name__ == "__main__":
     qubit = "q10"
 
     options = QubitSpecOptions()
+    options.n_avg = 300
     options.simulate = False
     # or True if you want simulation
     params = QPUConfig()
 
-    # # Example: adjust readout pulse from params if you want
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
-    params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
+    # Example: adjust saturation pulse from params if you want
+    params.qubits[qubit].gates.saturation_pulse.amplitude = 0.0001
+    params.qubits[qubit].gates.saturation_pulse.length = 100 * u.us
 
-    span = 100 * u.MHz
+    span = 1 * u.MHz
     N = 100
     df = span // N
     frequencies = np.arange(-span / 2, span / 2, df)
@@ -218,4 +198,3 @@ if __name__ == "__main__":
     )
 
     experiment.run()
-    plt.show()

@@ -9,9 +9,15 @@
                         "amplitude": 0.06576319751403452,
                         "axis_angle": 0,
                         "__class__": "quam.components.pulses.SquarePulse"
+                    },
+                    "saturation": {
+                        "length": 100000,
+                        "amplitude": 0.401,
+                        "axis_angle": 0,
+                        "__class__": "quam.components.pulses.SquarePulse"
                     }
                 },
-                "intermediate_frequency": 93236900,
+                "intermediate_frequency": -97236900,
                 "opx_output_I": [
                     "con1",
                     3
@@ -29,7 +35,7 @@
                     },
                     "mixer": {
                         "local_oscillator_frequency": 4500000000,
-                        "intermediate_frequency": 93236900,
+                        "intermediate_frequency": -97236900,
                         "correction_gain": -0.035665,
                         "correction_phase": -0.246676,
                         "__class__": "quam.components.hardware.Mixer"
@@ -62,8 +68,6 @@
                     "con1",
                     2
                 ],
-                "time_of_flight": null,
-                "smearing": null,
                 "opx_output_I": [
                     "con1",
                     1
@@ -77,6 +81,7 @@
                 "frequency_converter_up": {
                     "local_oscillator": {
                         "frequency": 7610000000,
+                        "power": 10,
                         "__class__": "quam.components.hardware.LocalOscillator"
                     },
                     "mixer": {

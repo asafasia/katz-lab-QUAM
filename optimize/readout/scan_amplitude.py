@@ -54,13 +54,17 @@ class ScanAmplitude:
         plt.grid()
 
         from scipy.ndimage import gaussian_filter
-        fidelities_smooth = gaussian_filter(fidelities, sigma=1)
 
+        fidelities_smooth = gaussian_filter(fidelities, sigma=1)
 
         plt.plot(amplitudes, fidelities)
         plt.plot(amplitudes, fidelities_smooth)
-        
-        plt.plot(amplitudes[np.argmax(fidelities_smooth)], fidelities_smooth[np.argmax(fidelities_smooth)], "ro")
+
+        plt.plot(
+            amplitudes[np.argmax(fidelities_smooth)],
+            fidelities_smooth[np.argmax(fidelities_smooth)],
+            "ro",
+        )
 
         plt.xlabel("Amplitude")
         plt.ylabel("Fidelity")
@@ -72,9 +76,7 @@ if __name__ == "__main__":
     params = QPUConfig()
     params.qubits["q10"].gates.readout_pulse.length = 2000 * u.ns
 
-
-
-    amplitudes = np.linspace(0, 0.15, 100)
+    amplitudes = np.linspace(0, 0.15, 30)
     scan_amplitude = ScanAmplitude(
         qubit="q10", options=Options(), amplitudes=amplitudes, params=params
     )

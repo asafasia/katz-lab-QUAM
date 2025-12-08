@@ -98,3 +98,6 @@ if __name__ == "__main__":
 
     pprint(config)
     # machine.load()
+
+
+    print(machine.qubits["10"].xy.inferred_intermediate_frequency)

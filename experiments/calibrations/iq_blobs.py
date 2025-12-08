@@ -13,13 +13,13 @@ from experiments.core.base_experiment import BaseExperiment
 from utils import Options
 from dataclasses import dataclass
 
+
 # -------------------------------------------------------------------------
 # PARAMETERS
 # -------------------------------------------------------------------------
 @dataclass
 class IQBlobsOptions(Options):
     n_avg: int = 2000
-
 
 
 class IQBlobsExperiment(BaseExperiment):
@@ -37,7 +37,7 @@ class IQBlobsExperiment(BaseExperiment):
 
     def execute_program(self):
         self.qm = self.qmm.open_qm(self.config)
-        job = self.qm.execute(self.program,dry_run=True)
+        job = self.qm.execute(self.program, dry_run=True)
         variable_list = ["Ig", "Qg", "Ie", "Qe"]
         results = fetching_tool(job, data_list=variable_list)
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     options = IQBlobsOptions()
     options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.069
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.04
     params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
