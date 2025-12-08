@@ -9,12 +9,11 @@ from qualang_tools.results import fetching_tool
 from qualang_tools.loops import from_array
 from qpu.config import *
 from qpu.transmon import *
-
+from qpu.transmon import u
 
 n_avg = 200
 long_pulse = True
-
-qubit = machine.qubits["q10"]
+qubit = machine.qubits["10"]
 
 
 resonator_LO = qubit.resonator.frequency_converter_up.LO_frequency
@@ -27,7 +26,7 @@ f_max = resonator_freq + span / 2
 frequencies = np.arange(f_min, f_max, df)
 frequencies_IF = resonator_LO - frequencies
 thermalization = 300 * u.us
-simulate = False
+simulate = True
 
 with program() as resonator_spec:
     n = declare(int)  # QUA variable for the averaging loop
@@ -46,26 +45,26 @@ with program() as resonator_spec:
         with for_(*from_array(f, frequencies_IF)):
             rr = qubit.resonator
             rr.update_frequency(f)
-            rr.measure("readout", qua_vars=(I1, Q1), stream=None)
+            rr.measure("readout")
             rr.wait(thermalization)
             rr.align()
 
             save(I1, I_st1)
             save(Q1, Q_st1)
 
-            # qubit.xy.play("X180")
-            # rr.align()
+            qubit.xy.play("X180")
+            rr.align()
 
-            # rr.measure("readout", qua_vars=(I2, Q2), stream=None)
-            # wait(thermalization, rr.name)
-            # save(I2, I_st2)
-            # save(Q2, Q_st2)
+            rr.measure("readout", qua_vars=(I2, Q2), stream=None)
+            wait(thermalization, rr.name)
+            save(I2, I_st2)
+            save(Q2, Q_st2)
 
     with stream_processing():
         I_st1.buffer(len(frequencies)).buffer(n_avg).save("I1")
         Q_st1.buffer(len(frequencies)).buffer(n_avg).save("Q1")
-        # I_st2.buffer(len(frequencies)).buffer(n_avg).save("I2")
-        # Q_st2.buffer(len(frequencies)).buffer(n_avg).save("Q2")
+        I_st2.buffer(len(frequencies)).buffer(n_avg).save("I2")
+        Q_st2.buffer(len(frequencies)).buffer(n_avg).save("Q2")
         # n_st.save("iteration")
         pass
 

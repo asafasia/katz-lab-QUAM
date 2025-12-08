@@ -3,6 +3,14 @@
         "10": {
             "id": "10",
             "xy": {
+                "operations": {
+                    "X180": {
+                        "length": 40,
+                        "amplitude": 0.0,
+                        "axis_angle": 0,
+                        "__class__": "quam.components.pulses.SquarePulse"
+                    }
+                },
                 "intermediate_frequency": 93236900,
                 "opx_output_I": [
                     "con1",
@@ -12,6 +20,8 @@
                     "con1",
                     4
                 ],
+                "opx_output_offset_I": 0.006982553780215784,
+                "opx_output_offset_Q": -0.08350116118923179,
                 "frequency_converter_up": {
                     "local_oscillator": {
                         "frequency": 4500000000,
@@ -25,6 +35,19 @@
                 "__class__": "quam.components.channels.IQChannel"
             },
             "resonator": {
+                "operations": {
+                    "readout": {
+                        "length": 1000,
+                        "amplitude": 0.1,
+                        "integration_weights": [
+                            [
+                                1,
+                                500
+                            ]
+                        ],
+                        "__class__": "quam.components.pulses.SquareReadoutPulse"
+                    }
+                },
                 "id": "10",
                 "intermediate_frequency": 24436473,
                 "opx_input_I": [
@@ -44,6 +67,8 @@
                     "con1",
                     2
                 ],
+                "opx_output_offset_I": -0.010268844738358691,
+                "opx_output_offset_Q": 0.08585555822268352,
                 "frequency_converter_up": {
                     "local_oscillator": {
                         "frequency": 7610000000,

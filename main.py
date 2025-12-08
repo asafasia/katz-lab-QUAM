@@ -1,5 +1,5 @@
 from numpy import int16
-from qpu.transmon import *
+from qpu.transmon_copy2 import *
 from config.config import *
 from qm import QuantumMachinesManager, SimulationConfig
 import numpy as np
