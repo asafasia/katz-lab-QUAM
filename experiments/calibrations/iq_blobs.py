@@ -21,11 +21,11 @@ class IQBlobsOptions(Options):
 
 
 class IQBlobsExperiment(BaseExperiment):
-    def __init__(self, qubit, options=None):
+    def __init__(self, qubit, options=None, params=None):
 
         if options is None:
             options = IQBlobsOptions()
-        super().__init__(qubit, options)
+        super().__init__(qubit, options, params)
 
     def define_program(self):
         self.program = _program(self.qubit, self.options)
@@ -53,13 +53,15 @@ class IQBlobsExperiment(BaseExperiment):
             b_print=False,
             b_plot=False,
         )
+        self.data["angle"] = angle
+        self.data["threshold"] = threshold
+        self.data["fidelity"] = fidelity
 
     def plot_results(self):
         Ig = np.array(self.data["Ig"])
         Qg = np.array(self.data["Qg"])
         Ie = np.array(self.data["Ie"])
         Qe = np.array(self.data["Qe"])
-
 
         angle, threshold, fidelity, gg, ge, eg, ee = two_state_discriminator(
             Ig, Qg, Ie, Qe, b_print=self.options.plot, b_plot=self.options.plot
@@ -116,6 +118,14 @@ def _program(qubit, n_avg, thermalization):
 
 
 if __name__ == "__main__":
-    experiment = IQBlobsExperiment("q10")
-    experiment.run()
 
+    from params import QPUConfig
+
+    qubit = "q10"
+
+    params = QPUConfig()
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.01
+    params.qubits[qubit].gates.readout_pulse.length = 1000 * u.ns
+
+    experiment = IQBlobsExperiment(qubit, params)
+    experiment.run()

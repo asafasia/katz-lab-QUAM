@@ -13,7 +13,7 @@ class BaseExperiment(ABC):
         self,
         qubit: str,
         options: Options,
-        params=None,
+        params: QPUConfig = None,
     ):
 
         self.data = dict()
@@ -21,7 +21,7 @@ class BaseExperiment(ABC):
         self.options = options
         self.params = params
 
-        qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
+        self.qmm = QuantumMachinesManager(host=qm_host, port=qm_port)
 
         if params is None:
             params = QPUConfig()
