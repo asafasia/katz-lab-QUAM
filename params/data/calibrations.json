@@ -1,17 +1,6 @@
 {
   "q10": {
     "qubit": {
-      "IQ_input": {
-        "I": 3,
-        "Q": 4
-      },
-      "IQ_bias": {
-        "I": 0.006982553780215784,
-        "Q": -0.08350116118923179
-      },
-      "correction_gain": -0.03566545454545449,
-      "correction_phase": -0.24667636363636358,
-      "qubit_LO": 4500000000,
       "qubit_ge_freq": 4406763100,
       "qubit_ef_freq": 4406764310,
       "T1": 45000.0,
@@ -19,17 +8,6 @@
       "thermalization_time": 200000
     },
     "resonator": {
-      "IQ_input": {
-        "I": 1,
-        "Q": 2
-      },
-      "IQ_bias": {
-        "I": -0.010268844738358691,
-        "Q": 0.08585555822268352
-      },
-      "correction_gain": 0.030080000000000016,
-      "correction_phase": -0.09290181818181818,
-      "resonator_LO": 7610000000,
       "resonator_freq": 7585563527,
       "time_of_flight": 340,
       "smearing": 0,

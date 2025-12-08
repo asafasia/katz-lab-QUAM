@@ -1,58 +1,86 @@
 import json
+import yaml
 from pathlib import Path
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
-ARGS_PATH = BASE_DIR / "params.json"
+CALIBRATIONS_PATH = BASE_DIR / "data/calibrations.json"
+HARDWARE_PATH = BASE_DIR / "data/hardware.yaml"
 
 
 class Params:
-    def __init__(self, path=ARGS_PATH):
-        self.path = path
-        with open(path) as f:
-            self.data = json.load(f)
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.data = self._load()
+
+    # --------------------
+    # LOADING / SAVING
+    # --------------------
+    def _load(self):
+        suffix = self.path.suffix.lower()
+        with open(self.path) as f:
+            if suffix == ".json":
+                return json.load(f)
+            elif suffix in (".yaml", ".yml"):
+                return yaml.safe_load(f)
+            else:
+                raise ValueError(f"Unsupported file type: {suffix}")
 
     def _save(self):
+        suffix = self.path.suffix.lower()
         with open(self.path, "w") as f:
-            json.dump(self.data, f, indent=4)
+            if suffix == ".json":
+                json.dump(self.data, f, indent=4)
+            elif suffix in (".yaml", ".yml"):
+                yaml.safe_dump(self.data, f, sort_keys=False)
+            else:
+                raise ValueError(f"Unsupported file type: {suffix}")
 
+    # --------------------
+    # ACCESSORS
+    # --------------------
     def get(self, path, default=None):
         keys = path.split("/")
         cur = self.data
+
         for k in keys:
             if isinstance(cur, dict) and k in cur:
                 cur = cur[k]
             else:
                 if default is not None:
                     return default
-                raise KeyError(f"Key not found in JSON: '{k}' in path '{path}'")
+                raise KeyError(f"Key not found: '{k}' in '{path}'")
         return cur
 
     def set(self, path, value):
         keys = path.split("/")
         cur = self.data
 
-        # Navigate to the parent dict
+        # navigate to parent
         for k in keys[:-1]:
-            if k not in cur or not isinstance(cur[k], dict):
+            if k not in cur:
                 raise KeyError(
-                    f"Cannot update: missing parent key '{k}' while accessing '{path}'"
+                    f"Missing parent key '{k}' while accessing '{path}'"
+                )
+            if not isinstance(cur[k], dict):
+                raise KeyError(
+                    f"Cannot descend into non-dict key '{k}' in '{path}'"
                 )
             cur = cur[k]
 
         final_key = keys[-1]
         if final_key not in cur:
             raise KeyError(
-                f"Cannot update: final key '{final_key}' does not exist in '{path}'"
+                f"Final key '{final_key}' does not exist in '{path}'"
             )
 
-        # Perform update
+        # update and save
         cur[final_key] = value
         self._save()
-
-        # ✔ nice confirmation print
         print(f"Updated '{path}' → {value}")
 
+    # Pythonic access
     def __getitem__(self, path):
         return self.get(path)
 
@@ -60,8 +88,17 @@ class Params:
         self.set(path, value)
 
 
+# --------------------
+# USAGE EXAMPLE
+# --------------------
 if __name__ == "__main__":
-    params = Params()
+    hardware = Params(HARDWARE_PATH)
+    calibrations = Params(CALIBRATIONS_PATH)
 
-    print(type(params))
-    print(params.__dict__)
+    # Pretty print hardware
+    from pprint import pprint
+    pprint(hardware.data)
+
+    # Example updates:
+    # hardware["q10/qubit/qubit_LO"] = 4.5e9
+    # print(hardware["q10/qubit/qubit_LO"])

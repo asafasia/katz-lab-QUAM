@@ -10,7 +10,7 @@ from quam.components import pulses
 
 from params import QPUConfig
 from utils import u
-
+from qpu.config import BASE_DIR
 
 
 def create_machine(params: QPUConfig):
@@ -83,10 +83,9 @@ if __name__ == "__main__":
 
     machine = create_machine(params)
 
-    machine.save()
+    path = BASE_DIR / "params/data/state.json"
+
+    machine.save(path)
     config = machine.generate_config()
 
-    machine.load()
-
-
-    
+    # machine.load()

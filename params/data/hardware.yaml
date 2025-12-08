@@ -1,0 +1,42 @@
+q10:
+  qubit:
+    correction_gain: -0.035665
+    correction_phase: -0.246676
+    LO_frequency: 4500000000
+    output:
+      channel:
+        I: 3
+        Q: 4
+      offset:
+        I: 0.00698255
+        Q: -0.08350116
+      gain_db:
+        I: 2
+        Q: 2
+
+
+  resonator:
+    correction_gain: 0.030080000000000016
+    correction_phase: -0.09290181818181818
+    LO_frequency: 7610000000
+    output:
+      channel:
+        I: 1
+        Q: 2
+      offset:
+        I: -0.01026884
+        Q: 0.08585556
+      gain_db:
+        I: 0
+        Q: 0
+    input:
+      channel:
+        I: 1
+        Q: 2
+      offset:
+        I: 0
+        Q: 0
+      gain_db:
+        I: 0
+        Q: 0
+

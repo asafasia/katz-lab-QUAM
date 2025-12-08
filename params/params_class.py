@@ -3,6 +3,8 @@ from typing import List, Dict, Any
 
 from params import Params
 
+from params.loader import HARDWARE_PATH, CALIBRATIONS_PATH
+
 # ---------- Basic Structures ----------
 
 
@@ -143,63 +145,101 @@ class QPUNode:
     gates: GatesConfig
 
 
-@dataclass
 class QPUConfig:
-    """
-    A dictionary of qubit IDs ("q10", "q11", ...) → QPUNode
-    """
-
     qubits: Dict[str, QPUNode]
 
     def __init__(self):
         self.qubits = self._from_dict()
 
     @staticmethod
-    def _from_dict(data: Dict[str, Any] = None):
+    def _from_dict(hardware=None, calibrations=None):
 
-        if data is None:
-            data = Params().__dict__["data"]
+        if hardware is None:
+            hardware = Params(HARDWARE_PATH).__dict__["data"]
+        if calibrations is None:
+            calibrations = Params(CALIBRATIONS_PATH).__dict__["data"]
+
         parsed = {}
-        for name, node in data.items():
 
-            qub = node["qubit"]
-            res = node["resonator"]
-            gat = node["gates"]
+        for qubit_id in hardware.keys():
 
-            parsed[name] = QPUNode(
-                qubit=QubitConfig(
-                    IQ_input=IQInput(**qub["IQ_input"]),
-                    IQ_bias=IQBias(**qub["IQ_bias"]),
-                    correction_gain=qub["correction_gain"],
-                    correction_phase=qub["correction_phase"],
-                    qubit_LO=qub["qubit_LO"],
-                    qubit_ge_freq=qub["qubit_ge_freq"],
-                    qubit_ef_freq=qub["qubit_ef_freq"],
-                    T1=qub["T1"],
-                    T2=qub["T2"],
-                    thermalization_time=qub["thermalization_time"],
+            calibrations = calibrations[qubit_id]
+            hardware = hardware[qubit_id]
+
+            calibrations_q = calibrations["qubit"]
+            calibrations_r = calibrations["resonator"]
+            calibrations_g = calibrations["gates"]
+
+            hardware_q = hardware["qubit"]
+            hardware_r = hardware["resonator"]
+
+            # ---- qubit output channels ----
+            q_out = hardware_q["output"]
+            q_chan = q_out["channel"]
+            q_off = q_out["offset"]
+
+            qubit_cfg = QubitConfig(
+                IQ_input=IQInput(
+                    I=q_chan.get("I", 0),
+                    Q=q_chan.get("Q", 0),
                 ),
-                resonator=ResonatorConfig(
-                    IQ_input=IQInput(**res["IQ_input"]),
-                    IQ_bias=IQBias(**res["IQ_bias"]),
-                    correction_gain=res["correction_gain"],
-                    correction_phase=res["correction_phase"],
-                    resonator_LO=res["resonator_LO"],
-                    resonator_freq=res["resonator_freq"],
-                    time_of_flight=res["time_of_flight"],
-                    smearing=res["smearing"],
-                    rotation_angle=res["rotation_angle"],
-                    threshold=res["threshold"],
+                IQ_bias=IQBias(
+                    I=q_off.get("I", 0.0),
+                    Q=q_off.get("Q", 0.0),
                 ),
-                gates=GatesConfig(
-                    square_gate=SquareGate(**gat["square_gate"]),
-                    gaussian_gate=GaussianGate(**gat["gaussian_gate"]),
-                    cos_gate=CosGate(**gat["cos_gate"]),
-                    drag_cos_gate=DragCosGate(**gat["drag_cos_gate"]),
-                    drag_gaussian_gate=DragGaussianGate(**gat["drag_gaussian_gate"]),
-                    saturation_pulse=SaturationPulse(**gat["saturation_pulse"]),
-                    readout_pulse=ReadoutPulse(**gat["readout_pulse"]),
+                correction_gain=hardware_q.get("correction_gain"),
+                correction_phase=hardware_q.get("correction_phase"),
+                qubit_LO=hardware_q.get("LO_frequency"),
+                qubit_ge_freq=calibrations_q.get("qubit_ge_freq"),
+                qubit_ef_freq=calibrations_q.get("qubit_ef_freq"),
+                T1=calibrations_q.get("T1"),
+                T2=calibrations_q.get("T2"),
+                thermalization_time=hardware_q.get("thermalization_time"),
+            )
+
+            # # # ---- resonator output channels ----
+            hw_res = hardware_r["output"]
+            r_chan = hw_res["channel"]
+            r_off = hw_res["offset"]
+
+            resonator_cfg = ResonatorConfig(
+                IQ_input=IQInput(
+                    I=r_chan.get("I", 0),
+                    Q=r_chan.get("Q", 0),
                 ),
+                IQ_bias=IQBias(
+                    I=r_off.get("I", 0.0),
+                    Q=r_off.get("Q", 0.0),
+                ),
+                correction_gain=hardware_r.get("correction_gain"),
+                correction_phase=hardware_r.get("correction_phase"),
+                resonator_LO=hardware_r.get("LO_frequency"),
+                resonator_freq=calibrations_r.get("resonator_freq"),
+                time_of_flight=hardware_r.get("time_of_flight"),
+                smearing=hardware_r.get("smearing"),
+                rotation_angle=hardware_r.get("rotation_angle"),
+                threshold=hardware_r.get("threshold"),
+            )
+
+            # # # ---- gates ----
+            calibrations_g = calibrations["gates"]
+
+            gates_cfg = GatesConfig(
+                square_gate=SquareGate(**calibrations_g["square_gate"]),
+                gaussian_gate=GaussianGate(**calibrations_g["gaussian_gate"]),
+                cos_gate=CosGate(**calibrations_g["cos_gate"]),
+                drag_cos_gate=DragCosGate(**calibrations_g["drag_cos_gate"]),
+                drag_gaussian_gate=DragGaussianGate(
+                    **calibrations_g["drag_gaussian_gate"]
+                ),
+                saturation_pulse=SaturationPulse(**calibrations_g["saturation_pulse"]),
+                readout_pulse=ReadoutPulse(**calibrations_g["readout_pulse"]),
+            )
+
+            parsed[qubit_id] = QPUNode(
+                qubit=qubit_cfg,
+                resonator=resonator_cfg,
+                gates=gates_cfg,
             )
 
         return parsed
@@ -210,7 +250,5 @@ if __name__ == "__main__":
     qpu_config = QPUConfig()
 
     q10_params = qpu_config.qubits["q10"]
-
-    q10_params.resonator.resonator_freq = 123
 
     print(q10_params.resonator.resonator_freq)
