@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from qualang_tools.results import progress_counter, fetching_tool
 from qualang_tools.loops import from_array
 from params import QPUConfig
-from utils import Options
+from utils import Options, u
 from experiments.core.base_experiment import BaseExperiment
 
 
@@ -28,9 +28,10 @@ class PowerRabiExperiment(BaseExperiment):
     ):
         super().__init__(qubit, options, params)
 
+        print(self.params.qubits["q10"].gates.square_gate.amplitude)
         self.amplitudes = amplitudes
         self.state_discrimination = False
-        self.rabi_amp = self.params["q10"].gates
+        self.rabi_amp = self.params.qubits["q10"].gates.square_gate.amplitude
 
     def define_program(self):
         with program() as power_rabi:
@@ -38,32 +39,29 @@ class PowerRabiExperiment(BaseExperiment):
             a = declare(fixed)
             I = declare(fixed)
             Q = declare(fixed)
-            state = declare(int)
             I_st = declare_stream()
             Q_st = declare_stream()
             n_st = declare_stream()
-            state_st = declare_stream()
 
             with for_(n, 0, n < self.options.n_avg, n + 1):
                 with for_(*from_array(a, self.amplitudes)):
-                    qubit_initialization(self.options.active_reset)
-
+                    rr = self.qubit.resonator
                     for _ in range(self.options.num_pis):
-                        play("X180" * amp(a), "qubit")
+                        self.qubit.xy.play("X180", a)
+                    self.qubit.xy.align()
 
-                    align("qubit", "resonator")
                     rr.measure("readout", qua_vars=(I, Q))
+                    rr.wait(300 * u.us)
+
 
                     save(I, I_st)
                     save(Q, Q_st)
-                    # save(state, state_st)
 
                 save(n, n_st)
 
             with stream_processing():
                 I_st.buffer(len(self.amplitudes)).average().save("I")
                 Q_st.buffer(len(self.amplitudes)).average().save("Q")
-                # state_st.buffer(len(self.amplitudes)).average().save("state")
                 n_st.save("iteration")
 
         self.program = power_rabi
@@ -126,9 +124,9 @@ class PowerRabiExperiment(BaseExperiment):
         amplitudes = self.data["amplitudes"]
         I = self.data["I"]
         Q = self.data["Q"]
-        state = self.data["state"]
 
-        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, ".")
+        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, Q, ".")
+        plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, I, ".")
         plt.title("Power Rabi g->e transition")
         plt.xlabel("Rabi amplitude (mV)")
         plt.ylabel("state")
@@ -144,11 +142,13 @@ class PowerRabiExperiment(BaseExperiment):
 if __name__ == "__main__":
     qubit = "q10"
     options = OptionsPowerRabi()
-    options.n_avg = 100
+    options.n_avg = 400
     options.n_a = 100
-    options.num_pis = 4
+    options.num_pis = 8
+    options.state_discrimination = False
+    options.simulate = True
 
-    amps = np.linspace(0, 1, 100)
+    amps = np.linspace(0.5, 1, 100)
     experiment = PowerRabiExperiment(
         qubit=qubit, options=options, amplitudes=amps, params=QPUConfig()
     )

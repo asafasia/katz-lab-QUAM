@@ -133,7 +133,7 @@ if __name__ == "__main__":
     options = IQBlobsOptions()
     options.simulate = False
     params = QPUConfig()
-    params.qubits[qubit].gates.readout_pulse.amplitude = 0.05
+    params.qubits[qubit].gates.readout_pulse.amplitude = 0.069
     params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
