@@ -6,7 +6,7 @@
                 "operations": {
                     "X180": {
                         "length": 40,
-                        "amplitude": 0.06576319751403452,
+                        "amplitude": 0.0668592508,
                         "__class__": "quam.components.pulses.SquarePulse"
                     },
                     "saturation": {
@@ -46,13 +46,13 @@
             "resonator": {
                 "operations": {
                     "readout": {
-                        "length": 2000,
-                        "amplitude": 0.07,
-                        "axis_angle": 1.736602605734358,
+                        "length": 2400,
+                        "amplitude": 0.08,
+                        "axis_angle": 1.3386675362796507,
                         "integration_weights": [
                             [
                                 1,
-                                2000
+                                1200.0
                             ]
                         ],
                         "__class__": "quam.components.pulses.SquareReadoutPulse"
@@ -68,6 +68,8 @@
                     "con1",
                     2
                 ],
+                "time_of_flight": 340,
+                "smearing": 10,
                 "opx_output_I": [
                     "con1",
                     1
@@ -81,7 +83,7 @@
                 "frequency_converter_up": {
                     "local_oscillator": {
                         "frequency": 7610000000,
-                        "power": 10,
+                        "power": 20,
                         "__class__": "quam.components.hardware.LocalOscillator"
                     },
                     "mixer": {

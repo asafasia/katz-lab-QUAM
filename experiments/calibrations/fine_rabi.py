@@ -92,13 +92,13 @@ class PowerRabiExperiment(BaseExperiment):
         self.results = results
 
     def analyze_results(self):
-        pass
-        # I, Q, state, iteration = self.results.fetch_all()
+        # pass
+        I, Q, state, iteration = self.results.fetch_all()
 
-        # self.data["amplitudes"] = self.amplitudes
-        # self.data["I"] = I
-        # self.data["Q"] = Q
-        # self.data["state"] = state
+        self.data["amplitudes"] = np.arange(self.reps)
+        self.data["I"] = I
+        self.data["Q"] = Q
+        self.data["state"] = state
 
         # if self.options.state_discrimination:
         #     self.y = state
@@ -131,8 +131,8 @@ class PowerRabiExperiment(BaseExperiment):
 
     def plot_results(self):
 
-        I = self.data["I"]
-        Q = self.data["Q"]
+        # I = self.data["I"]
+        # Q = self.data["Q"]
         state = self.data["state"]
 
         if not self.options.state_discrimination:
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     options.simulate = False
     options.active_reset = False
 
-    reps = 10
+    reps = 30
 
     experiment = PowerRabiExperiment(
         qubit=qubit, options=options, reps=reps, params=QPUConfig()

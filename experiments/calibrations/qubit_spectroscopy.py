@@ -70,19 +70,21 @@ class QubitSpectroscopyExperiment(BaseExperiment):
             self.data = {"simulation": job.get_simulated_samples()}
         else:
             job = self.qm.execute(self.program)
-            variable_list = ["I", "Q"]
+            variable_list = ["I", "Q", "state"]
             results = fetching_tool(job, data_list=variable_list)
 
-            I, Q = results.fetch_all()
+            I, Q, state = results.fetch_all()
 
             # Average over shots (n_avg)
             I = np.mean(I, axis=0)
             Q = np.mean(Q, axis=0)
+            state = np.mean(state, axis=0)
 
             self.data = {
                 "frequencies": self.frequencies_RF,
                 "I": I,
                 "Q": Q,
+                "state": state,
             }
 
     # --------------------------------------------------
@@ -94,10 +96,9 @@ class QubitSpectroscopyExperiment(BaseExperiment):
 
         I = self.data["I"]
         Q = self.data["Q"]
+        state = self.data["state"]
 
-
-
-        self.data["state"] = I
+        self.data["state"] = state
         self.data["frequencies"] = self.frequencies_RF
 
         max_freq = np.argmin(np.abs(I))
@@ -114,9 +115,11 @@ class QubitSpectroscopyExperiment(BaseExperiment):
         print(int(max_freq))
 
         plt.figure()
-        plt.plot(freqs, np.abs(states), label="|state|")
+        plt.plot(freqs, states, label="|state|")
         plt.axvline(max_freq, color="r", linestyle="--", label="max_freq")
-        plt.axvline(self.qubit_RF, color="g", linestyle="--", label="current qubit freq")
+        plt.axvline(
+            self.qubit_RF, color="g", linestyle="--", label="current qubit freq"
+        )
         plt.xlabel("Frequency [Hz]")
         plt.ylabel("state")
         plt.legend()
@@ -148,6 +151,9 @@ def _program(qubit, options: QubitSpecOptions, frequencies_IF):
 
         I_st = declare_stream()
         Q_st = declare_stream()
+        state = declare(int)
+
+        state_st = declare_stream()
 
         with for_(n, 0, n < n_avg, n + 1):
             with for_(*from_array(f, frequencies_IF)):
@@ -160,9 +166,16 @@ def _program(qubit, options: QubitSpecOptions, frequencies_IF):
                 save(I, I_st)
                 save(Q, Q_st)
 
+                with if_(I > qubit.parameters.resonator.threshold):
+                    assign(state, 1)
+                with else_():
+                    assign(state, 0)
+                save(state, state_st)
+
         with stream_processing():
             I_st.buffer(len(frequencies_IF)).buffer(n_avg).save("I")
             Q_st.buffer(len(frequencies_IF)).buffer(n_avg).save("Q")
+            state_st.buffer(len(frequencies_IF)).buffer(n_avg).save("state")
 
     return resonator_spec
 

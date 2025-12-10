@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from qm import QuantumMachinesManager, SimulationConfig
-from utils.options import Options
+from utils import Options
 from qm.qua import *
 
 from qpu.transmon import create_machine

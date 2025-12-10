@@ -158,12 +158,25 @@ def active_reset(qubit):
     threshold = qubit.parameters.resonator.threshold
     I_reset = declare(fixed)
     Q_reset = declare(fixed)
-    qubit.xy.align(qubit.resonator.name)
-    qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
-    qubit.xy.align(qubit.resonator.name)
-    qubit.xy.play("X180", condition=(I_reset > threshold))
-    qubit.resonator.wait(3 * u.us)
-    qubit.xy.align(qubit.resonator.name)
+    state_reset = declare(int)
+    for _ in range(2):
+        qubit.xy.align(qubit.resonator.name)
+        qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+        qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+        qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+
+        with if_(I_reset > threshold):
+            assign(state_reset, 1)
+        with else_():
+            assign(state_reset, 0)
+        qubit.xy.align(qubit.resonator.name)
+
+        with if_(state_reset == 1):
+            qubit.xy.play("X180")
+        with else_():
+            pass
+        qubit.resonator.wait(50 * u.us)
+        qubit.xy.align(qubit.resonator.name)
 
 
 def passive_reset(qubit):
@@ -184,14 +197,15 @@ def qubit_initialization(qubit, options):
 if __name__ == "__main__":
     qubit = "q10"
     options = OptionsPowerRabi()
-    options.n_avg = 10000
+    options.n_avg = 1000
     options.n_a = 100
     options.num_pis = 4
     options.state_discrimination = True
     options.simulate = False
+    options.simulate_duration = 10 * u.us
     options.active_reset = True
 
-    amps = np.linspace(0, 1, 100)
+    amps = np.linspace(0.5, 1, 100)
     experiment = PowerRabiExperiment(
         qubit=qubit, options=options, amplitudes=amps, params=QPUConfig()
     )

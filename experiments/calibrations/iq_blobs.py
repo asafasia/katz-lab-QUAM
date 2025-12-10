@@ -5,6 +5,7 @@ from qm.qua import *
 from qm import QuantumMachinesManager, SimulationConfig
 from qualang_tools.results import fetching_tool
 
+from macros.reset import *
 from qpu.transmon import *
 from qpu.config import *
 
@@ -13,13 +14,15 @@ from experiments.core.base_experiment import BaseExperiment
 from utils import Options
 from dataclasses import dataclass
 
+from params import QPUConfig
+
 
 # -------------------------------------------------------------------------
 # PARAMETERS
 # -------------------------------------------------------------------------
 @dataclass
 class IQBlobsOptions(Options):
-    n_avg: int = 5000
+    n_avg: int = 20000
 
 
 class IQBlobsExperiment(BaseExperiment):
@@ -29,7 +32,6 @@ class IQBlobsExperiment(BaseExperiment):
         options: IQBlobsOptions = IQBlobsOptions(),
         params: QPUConfig = None,
     ):
-
         super().__init__(qubit=qubit, options=options, params=params)
 
     def define_program(self):
@@ -86,7 +88,6 @@ def _program(qubit, options):
     with program() as iq_blobs:
 
         n = declare(int)
-        shot = declare(int)
         Ig = declare(fixed)
         Qg = declare(fixed)
         Ie = declare(fixed)
@@ -126,15 +127,17 @@ def active_reset(qubit):
     Q_reset = declare(fixed)
     qubit.xy.align(qubit.resonator.name)
     qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+    qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+    qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
     qubit.xy.align(qubit.resonator.name)
     qubit.xy.play("X180", condition=(I_reset < threshold))
-    qubit.resonator.wait(300 * u.us)
+    qubit.resonator.wait(1 * u.us)
     qubit.xy.align(qubit.resonator.name)
 
 
 def passive_reset(qubit):
     thermalization_time = qubit.parameters.qubit.thermalization_time
-    thermalization_time = 400 * u.us
+    thermalization_time = 300 * u.us
     qubit.xy.align(qubit.resonator.name)
     wait(thermalization_time, qubit.name)
     qubit.xy.align(qubit.resonator.name)
@@ -149,14 +152,12 @@ def qubit_initialization(qubit, options):
 
 if __name__ == "__main__":
 
-    from params import QPUConfig
-
     qubit = "q10"
 
     options = IQBlobsOptions()
     options.simulate = False
     options.active_reset = False
-    options.simulate_duration = 5000 * u.ns
+    options.simulate_duration = 3000 * u.ns
     params = QPUConfig()
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)

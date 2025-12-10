@@ -29,7 +29,7 @@ class ScanAmplitude:
 
         options = IQBlobsOptions()
         options.simulate = False
-        options.n_avg = 2000
+        options.n_avg = 20000
         options.plot = False
 
         for amplitude in self.amplitudes:
@@ -75,13 +75,31 @@ if __name__ == "__main__":
 
     params = QPUConfig()
 
-    length = 3000 * u.ns
-    params.qubits["q10"].gates.readout_pulse.length = length
-
+    lengths = np.arange(1000, 3000, 200)
     amplitudes = np.linspace(0, 0.15, 10)
-    scan_amplitude = ScanAmplitude(
-        qubit="q10", options=Options(), amplitudes=amplitudes, params=params
-    )
-    scan_amplitude.run()
-    scan_amplitude.plot_results(label=f"Length: {length}")
+
+    fidelities_matrix = []
+
+    for length in lengths:
+
+        l = int(length) * u.ns
+        params.qubits["q10"].gates.readout_pulse.length = l
+
+        scan_amplitude = ScanAmplitude(
+            qubit="q10", options=Options(), amplitudes=amplitudes, params=params
+        )
+        scan_amplitude.run()
+        fidelities_matrix.append(scan_amplitude.data["fidelities"])
+
+    fidelities_matrix = np.array(fidelities_matrix)
+
+
+    plt.figure(figsize=(10, 5))
+    plt.title("Scan Amplitude")
+    plt.grid()
+
+    for i in range(len(lengths)):
+        plt.plot(amplitudes, fidelities_matrix[i], label=f"Length: {lengths[i]}")
+
+    plt.legend()
     plt.show()

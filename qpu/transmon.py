@@ -9,7 +9,7 @@ from quam.examples.superconducting_qubits import Transmon, Quam
 from quam.components import pulses
 
 from params import QPUConfig
-from utils import u
+
 from qpu.config import BASE_DIR
 import numpy as np
 
@@ -59,7 +59,7 @@ def create_machine(params: QPUConfig):
                 correction_phase=resonator_params.correction_phase,
             ),
             local_oscillator=LocalOscillator(
-                frequency=resonator_params.resonator_LO, power=0
+                frequency=resonator_params.resonator_LO, power=20
             ),
         ),
         time_of_flight=resonator_params.time_of_flight,
@@ -81,8 +81,8 @@ def create_machine(params: QPUConfig):
     transmon.resonator.operations["readout"] = pulses.SquareReadoutPulse(
         length=gates.readout_pulse.length,
         amplitude=gates.readout_pulse.amplitude,
-        integration_weights=[(1, gates.readout_pulse.length)],
-        axis_angle=(79.5 + 20) / 180 * np.pi,
+        integration_weights=[(1, gates.readout_pulse.length / 2)],
+        axis_angle=resonator_params.rotation_angle / 180 * np.pi,
     )
 
     machine.qubits[transmon.name] = transmon
