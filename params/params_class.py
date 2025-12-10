@@ -194,7 +194,7 @@ class QPUConfig:
                 qubit_ef_freq=calibrations_q.get("qubit_ef_freq"),
                 T1=calibrations_q.get("T1"),
                 T2=calibrations_q.get("T2"),
-                thermalization_time=hardware_q.get("thermalization_time"),
+                thermalization_time=calibrations_q.get("thermalization_time"),
             )
 
             # # # ---- resonator output channels ----

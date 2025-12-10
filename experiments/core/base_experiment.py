@@ -60,7 +60,7 @@ class BaseExperiment(ABC):
             import matplotlib.pyplot as plt
 
             simulation_config = SimulationConfig(
-                duration=10_000
+                duration=self.options.simulate_duration
             )  # In clock cycles = 4ns
             job = self.qmm.simulate(self.config, self.program, simulation_config)
             job.get_simulated_samples().con1.plot()

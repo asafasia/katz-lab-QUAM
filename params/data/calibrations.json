@@ -12,7 +12,7 @@
       "time_of_flight": 340,
       "smearing": 0,
       "rotation_angle": 114.74050336216277,
-      "threshold": 1.753e-05
+      "threshold": -1.533e-03
     },
     "gates": {
       "square_gate": {

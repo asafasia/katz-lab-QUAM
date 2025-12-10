@@ -11,12 +11,17 @@ from quam.components import pulses
 from params import QPUConfig
 from utils import u
 from qpu.config import BASE_DIR
+import numpy as np
+
+
+class KatzTransmon(Transmon):
+    parameters = QPUConfig().qubits["q10"]
 
 
 def create_machine(params: QPUConfig):
     machine = Quam()
     controller = "con1"
-    transmon = Transmon(id="10")
+    transmon = KatzTransmon(id="10")
     qubit_params = params.qubits["q10"].qubit
     resonator_params = params.qubits["q10"].resonator
     gates = params.qubits["q10"].gates
@@ -77,7 +82,7 @@ def create_machine(params: QPUConfig):
         length=gates.readout_pulse.length,
         amplitude=gates.readout_pulse.amplitude,
         integration_weights=[(1, gates.readout_pulse.length)],
-        axis_angle=90,
+        axis_angle=(79.5 + 20) / 180 * np.pi,
     )
 
     machine.qubits[transmon.name] = transmon
@@ -98,9 +103,7 @@ if __name__ == "__main__":
 
     from pprint import pprint
 
-    pprint(config)
+    # pprint(config)
     # machine.load()
 
-    print(machine.qubits["10"].xy.inferred_intermediate_frequency)
-
-
+    print(machine.qubits["10"].parameters.resonator.threshold)

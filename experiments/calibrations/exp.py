@@ -143,48 +143,48 @@ with program() as opt_weights:
         # Measure the ground state
         measure(
             "readout",
-            "resonator",
-            demod.sliced("cos", II, division_length, "out1"),
-            demod.sliced("sin", IQ, division_length, "out2"),
-            demod.sliced("minus_sin", QI, division_length, "out1"),
-            demod.sliced("cos", QQ, division_length, "out2"),
+            "10",
+            demod.sliced("cosine", II, division_length, "out1"),
+            # demod.sliced("sine", IQ, division_length, "out2"),
+            # demod.sliced("sine", QI, division_length, "out1"),
+            # demod.sliced("cosine", QQ, division_length, "out2"),
         )
-        wait(thermalization_time * u.ns, "resonator")
-        # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
-        with for_(ind, 0, ind < number_of_divisions, ind + 1):
-            save(II[ind], II_st)
-            save(IQ[ind], IQ_st)
-            save(QI[ind], QI_st)
-            save(QQ[ind], QQ_st)
+        wait(thermalization_time * u.ns, "10")
+        # # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
+        # with for_(ind, 0, ind < number_of_divisions, ind + 1):
+        #     save(II[ind], II_st)
+        #     save(IQ[ind], IQ_st)
+        #     save(QI[ind], QI_st)
+        #     save(QQ[ind], QQ_st)
 
-        align()  # Global align to play the pi pulse after thermalization
+        # align()  # Global align to play the pi pulse after thermalization
 
-        # Measure the excited state
-        play("X180", "qubit")
-        align("qubit", "resonator")
-        measure(
-            "readout",
-            "resonator",
-            demod.sliced("cos", II, division_length, "out1"),
-            demod.sliced("sin", IQ, division_length, "out2"),
-            demod.sliced("minus_sin", QI, division_length, "out1"),
-            demod.sliced("cos", QQ, division_length, "out2"),
-        )
-        wait(thermalization_time * u.ns, "resonator")
-        # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
-        with for_(ind, 0, ind < number_of_divisions, ind + 1):
-            save(II[ind], II_st)
-            save(IQ[ind], IQ_st)
-            save(QI[ind], QI_st)
-            save(QQ[ind], QQ_st)
-        save(n, n_st)
+        # # Measure the excited state
+        # play("X180", "10.xy")
+        # align("10.xy", "10")
+        # measure(
+        #     "readout",
+        #     "10",
+        #     demod.sliced("cos", II, division_length, "out1"),
+        #     demod.sliced("sin", IQ, division_length, "out2"),
+        #     demod.sliced("minus_sin", QI, division_length, "out1"),
+        #     demod.sliced("cos", QQ, division_length, "out2"),
+        # )
+        # wait(thermalization_time * u.ns, "10")
+        # # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
+        # with for_(ind, 0, ind < number_of_divisions, ind + 1):
+        #     save(II[ind], II_st)
+        #     save(IQ[ind], IQ_st)
+        #     save(QI[ind], QI_st)
+        #     save(QQ[ind], QQ_st)
+        # save(n, n_st)
 
-    with stream_processing():
-        n_st.save("iteration")
-        II_st.buffer(2 * number_of_divisions).average().save("II")
-        IQ_st.buffer(2 * number_of_divisions).average().save("IQ")
-        QI_st.buffer(2 * number_of_divisions).average().save("QI")
-        QQ_st.buffer(2 * number_of_divisions).average().save("QQ")
+    # with stream_processing():
+        # n_st.save("iteration")
+        # II_st.buffer(2 * number_of_divisions).average().save("II")
+        # IQ_st.buffer(2 * number_of_divisions).average().save("IQ")
+        # # QI_st.buffer(2 * number_of_divisions).average().save("QI")
+        # QQ_st.buffer(2 * number_of_divisions).average().save("QQ")
 
 # #####################################
 # #  Open Communication with the QOP  #

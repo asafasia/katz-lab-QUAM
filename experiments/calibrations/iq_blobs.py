@@ -82,7 +82,6 @@ class IQBlobsExperiment(BaseExperiment):
 
 def _program(qubit, options):
     rr = qubit.resonator
-    thermalization = 300 * u.us
 
     with program() as iq_blobs:
 
@@ -99,21 +98,18 @@ def _program(qubit, options):
 
         with for_(n, 0, n < options.n_avg, n + 1):
             # ----------- Ground measurement ---------------
+            qubit_initialization(qubit, active_reset=options.active_reset)
             rr.measure("readout", qua_vars=(Ig, Qg))
             save(Ig, Ig_st)
             save(Qg, Qg_st)
-            wait(thermalization, rr.name)
-            qubit.xy.align()
 
             # ----------- Excited measurement ---------------
+            qubit_initialization(qubit, active_reset=options.active_reset)
             qubit.xy.play("X180")  # π pulse
-            qubit.xy.align()
 
             rr.measure("readout", qua_vars=(Ie, Qe))
             save(Ie, Ie_st)
             save(Qe, Qe_st)
-
-            wait(thermalization, rr.name)
 
         with stream_processing():
             Ig_st.buffer(options.n_avg).save("Ig")
@@ -124,6 +120,32 @@ def _program(qubit, options):
     return iq_blobs
 
 
+def qubit_initialization(qubit, active_reset=False):
+    thermalization = qubit.parameters.qubit.thermalization_time
+    threshold = qubit.parameters.resonator.threshold
+    I_reset = declare(fixed)
+    Q_reset = declare(fixed)
+    if active_reset:
+
+        # qubit.xy.align()
+        # qubit.resonator.align()
+        qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+        # qubit.xy.align()
+        # qubit.resonator.align()
+
+        with if_(I_reset > threshold):
+            qubit.xy.play("X180")
+            wait(16 * u.ns, qubit.name)
+        with else_():
+            pass
+
+    else:
+        wait(thermalization, qubit.name)
+
+    qubit.xy.align()
+    qubit.resonator.align()
+
+
 if __name__ == "__main__":
 
     from params import QPUConfig
@@ -131,10 +153,10 @@ if __name__ == "__main__":
     qubit = "q10"
 
     options = IQBlobsOptions()
-    options.simulate = False
+    options.simulate = True
+    options.active_reset = True
+    options.simulate_duration = 1000 * u.ns
     params = QPUConfig()
-    # params.qubits[qubit].gates.readout_pulse.amplitude = 0.07
-    # params.qubits[qubit].gates.readout_pulse.length = 2000 * u.ns
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)
 

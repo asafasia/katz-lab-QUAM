@@ -48,7 +48,7 @@
                     "readout": {
                         "length": 2000,
                         "amplitude": 0.07,
-                        "axis_angle": 90,
+                        "axis_angle": 1.736602605734358,
                         "integration_weights": [
                             [
                                 1,
@@ -95,7 +95,7 @@
                 },
                 "__class__": "quam.components.channels.InOutIQChannel"
             },
-            "__class__": "quam.examples.superconducting_qubits.components.Transmon"
+            "__class__": "KatzTransmon"
         }
     },
     "__class__": "quam.examples.superconducting_qubits.components.Quam"
