@@ -14,3 +14,4 @@ class Options:
     simulate: bool = False
     simulate_duration: float = 100 * u.us
     state_discrimination: bool = False
+    active_reset: bool = False

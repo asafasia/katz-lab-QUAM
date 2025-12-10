@@ -28,7 +28,7 @@ class PowerRabiExperiment(BaseExperiment):
     ):
         super().__init__(qubit, options, params)
 
-        print(self.params.qubits['q10'].resonator.threshold)
+        print(self.params.qubits["q10"].resonator.threshold)
         self.amplitudes = amplitudes
         self.state_discrimination = False
         self.rabi_amp = self.params.qubits["q10"].gates.square_gate.amplitude
@@ -47,18 +47,19 @@ class PowerRabiExperiment(BaseExperiment):
 
             with for_(n, 0, n < self.options.n_avg, n + 1):
                 with for_(*from_array(a, self.amplitudes)):
+                    qubit_initialization(self.qubit, self.options)
+
                     rr = self.qubit.resonator
                     for _ in range(self.options.num_pis):
                         self.qubit.xy.play("X180", a)
                     self.qubit.xy.align()
 
                     rr.measure("readout", qua_vars=(I, Q))
-                    rr.wait(300 * u.us)
-                    threshold = self.params.qubits['q10'].resonator.threshold
+                    threshold = self.qubit.parameters.resonator.threshold
                     with if_(I > threshold):
-                        assign(state,1)
+                        assign(state, 1)
                     with else_():
-                        assign(state,0)
+                        assign(state, 0)
 
                     save(I, I_st)
                     save(Q, Q_st)
@@ -135,14 +136,15 @@ class PowerRabiExperiment(BaseExperiment):
         Q = self.data["Q"]
         state = self.data["state"]
 
-
         if not self.options.state_discrimination:
             plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, I, ".")
         else:
-            plt.plot(amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, ".")
+            plt.plot(
+                amplitudes * self.rabi_amp * self.options.num_pis * 1e3, state, "."
+            )
         plt.title("Power Rabi g->e transition")
         plt.xlabel("Rabi amplitude (mV)")
-        plt.ylabel()
+        plt.ylabel("State")
         plt.show()
 
     def save_results(self):
@@ -152,14 +154,42 @@ class PowerRabiExperiment(BaseExperiment):
         pass
 
 
+def active_reset(qubit):
+    threshold = qubit.parameters.resonator.threshold
+    I_reset = declare(fixed)
+    Q_reset = declare(fixed)
+    qubit.xy.align(qubit.resonator.name)
+    qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+    qubit.xy.align(qubit.resonator.name)
+    qubit.xy.play("X180", condition=(I_reset > threshold))
+    qubit.resonator.wait(3 * u.us)
+    qubit.xy.align(qubit.resonator.name)
+
+
+def passive_reset(qubit):
+    thermalization_time = qubit.parameters.qubit.thermalization_time
+    thermalization_time = 300 * u.us
+    qubit.xy.align(qubit.resonator.name)
+    wait(thermalization_time, qubit.name)
+    qubit.xy.align(qubit.resonator.name)
+
+
+def qubit_initialization(qubit, options):
+    if options.active_reset:
+        active_reset(qubit)
+    else:
+        passive_reset(qubit)
+
+
 if __name__ == "__main__":
     qubit = "q10"
     options = OptionsPowerRabi()
-    options.n_avg = 200
+    options.n_avg = 10000
     options.n_a = 100
     options.num_pis = 4
     options.state_discrimination = True
     options.simulate = False
+    options.active_reset = True
 
     amps = np.linspace(0, 1, 100)
     experiment = PowerRabiExperiment(

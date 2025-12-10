@@ -5,6 +5,8 @@ from params import QPUConfig
 
 from experiments.calibrations.iq_blobs import IQBlobsExperiment, IQBlobsOptions
 from qpu.transmon import u
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
 
 
 class ScanAmplitude:
@@ -43,8 +45,7 @@ class ScanAmplitude:
     def _update_amplitude(self, amplitude: float):
         self.params.qubits[self.qubit].gates.readout_pulse.amplitude = amplitude
 
-    def plot_results(self):
-        import matplotlib.pyplot as plt
+    def plot_results(self, label: str = ""):
 
         amplitudes = self.data["amplitudes"]
         fidelities = self.data["fidelities"]
@@ -53,11 +54,9 @@ class ScanAmplitude:
         plt.title("Scan Amplitude")
         plt.grid()
 
-        from scipy.ndimage import gaussian_filter
-
         fidelities_smooth = gaussian_filter(fidelities, sigma=1)
 
-        plt.plot(amplitudes, fidelities)
+        plt.plot(amplitudes, fidelities, label=label)
         plt.plot(amplitudes, fidelities_smooth)
 
         plt.plot(
@@ -68,17 +67,21 @@ class ScanAmplitude:
 
         plt.xlabel("Amplitude")
         plt.ylabel("Fidelity")
-        plt.show()
+        plt.legend()
+        # plt.show()
 
 
 if __name__ == "__main__":
 
     params = QPUConfig()
-    params.qubits["q10"].gates.readout_pulse.length = 2000 * u.ns
 
-    amplitudes = np.linspace(0, 0.15, 30)
+    length = 3000 * u.ns
+    params.qubits["q10"].gates.readout_pulse.length = length
+
+    amplitudes = np.linspace(0, 0.15, 10)
     scan_amplitude = ScanAmplitude(
         qubit="q10", options=Options(), amplitudes=amplitudes, params=params
     )
     scan_amplitude.run()
-    scan_amplitude.plot_results()
+    scan_amplitude.plot_results(label=f"Length: {length}")
+    plt.show()

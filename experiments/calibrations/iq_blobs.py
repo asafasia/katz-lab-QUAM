@@ -98,16 +98,16 @@ def _program(qubit, options):
 
         with for_(n, 0, n < options.n_avg, n + 1):
             # ----------- Ground measurement ---------------
-            qubit_initialization(qubit, active_reset=options.active_reset)
+            qubit_initialization(qubit, options)
             rr.measure("readout", qua_vars=(Ig, Qg))
             save(Ig, Ig_st)
             save(Qg, Qg_st)
 
             # ----------- Excited measurement ---------------
-            qubit_initialization(qubit, active_reset=options.active_reset)
+            qubit_initialization(qubit, options)
             qubit.xy.play("X180")  # π pulse
-
-            rr.measure("readout", qua_vars=(Ie, Qe))
+            qubit.xy.align(rr.name)
+            rr.measure("readout", qua_vars=(Ie, Qe), amplitude_scale=1)
             save(Ie, Ie_st)
             save(Qe, Qe_st)
 
@@ -120,30 +120,31 @@ def _program(qubit, options):
     return iq_blobs
 
 
-def qubit_initialization(qubit, active_reset=False):
-    thermalization = qubit.parameters.qubit.thermalization_time
+def active_reset(qubit):
     threshold = qubit.parameters.resonator.threshold
     I_reset = declare(fixed)
     Q_reset = declare(fixed)
-    if active_reset:
+    qubit.xy.align(qubit.resonator.name)
+    qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
+    qubit.xy.align(qubit.resonator.name)
+    qubit.xy.play("X180", condition=(I_reset < threshold))
+    qubit.resonator.wait(300 * u.us)
+    qubit.xy.align(qubit.resonator.name)
 
-        # qubit.xy.align()
-        # qubit.resonator.align()
-        qubit.resonator.measure("readout", qua_vars=(I_reset, Q_reset))
-        # qubit.xy.align()
-        # qubit.resonator.align()
 
-        with if_(I_reset > threshold):
-            qubit.xy.play("X180")
-            wait(16 * u.ns, qubit.name)
-        with else_():
-            pass
+def passive_reset(qubit):
+    thermalization_time = qubit.parameters.qubit.thermalization_time
+    thermalization_time = 400 * u.us
+    qubit.xy.align(qubit.resonator.name)
+    wait(thermalization_time, qubit.name)
+    qubit.xy.align(qubit.resonator.name)
 
+
+def qubit_initialization(qubit, options):
+    if options.active_reset:
+        active_reset(qubit)
     else:
-        wait(thermalization, qubit.name)
-
-    qubit.xy.align()
-    qubit.resonator.align()
+        passive_reset(qubit)
 
 
 if __name__ == "__main__":
@@ -153,9 +154,9 @@ if __name__ == "__main__":
     qubit = "q10"
 
     options = IQBlobsOptions()
-    options.simulate = True
-    options.active_reset = True
-    options.simulate_duration = 1000 * u.ns
+    options.simulate = False
+    options.active_reset = False
+    options.simulate_duration = 5000 * u.ns
     params = QPUConfig()
 
     experiment = IQBlobsExperiment(qubit=qubit, options=options, params=params)

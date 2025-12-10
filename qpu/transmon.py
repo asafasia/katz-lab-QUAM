@@ -59,11 +59,11 @@ def create_machine(params: QPUConfig):
                 correction_phase=resonator_params.correction_phase,
             ),
             local_oscillator=LocalOscillator(
-                frequency=resonator_params.resonator_LO, power=10
+                frequency=resonator_params.resonator_LO, power=0
             ),
         ),
-        # time_of_flight=resonator_params.time_of_flight,
-        # smearing=resonator_params.smearing,
+        time_of_flight=resonator_params.time_of_flight,
+        smearing=resonator_params.smearing,
         intermediate_frequency=resonator_params.IF_freq,
     )
 

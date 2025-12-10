@@ -12,7 +12,7 @@
       "time_of_flight": 340,
       "smearing": 0,
       "rotation_angle": 114.74050336216277,
-      "threshold": -1.533e-03
+      "threshold": -1.006e-03
     },
     "gates": {
       "square_gate": {
@@ -48,8 +48,8 @@
         "amplitude": 0.401
       },
       "readout_pulse": {
-        "length": 2000,
-        "amplitude": 0.07
+        "length": 3000,
+        "amplitude": 0.06
       }
     }
   }

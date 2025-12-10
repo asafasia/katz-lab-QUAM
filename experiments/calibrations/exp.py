@@ -69,15 +69,15 @@ def plot_three_complex_arrays(x, arr1, arr2, arr3):
 
 def update_readout_length(new_readout_length, ringdown_length):
     config["pulses"]["10.readout.pulse"]["length"] = new_readout_length
-    config["integration_weights"]["cosine_weights"] = {
+    config["integration_weights"]["10.readout.iw1"] = {
         "cosine": [(1.0, new_readout_length + ringdown_length)],
         "sine": [(0.0, new_readout_length + ringdown_length)],
     }
-    config["integration_weights"]["sine_weights"] = {
+    config["integration_weights"]["10.readout.iw2"] = {
         "cosine": [(0.0, new_readout_length + ringdown_length)],
         "sine": [(1.0, new_readout_length + ringdown_length)],
     }
-    config["integration_weights"]["minus_sine_weights"] = {
+    config["integration_weights"]["10.readout.iw3"] = {
         "cosine": [(0.0, new_readout_length + ringdown_length)],
         "sine": [(-1.0, new_readout_length + ringdown_length)],
     }
@@ -94,8 +94,10 @@ ringdown_len = (
     0 * u.us
 )  # integration time after readout pulse to observe the ringdown of the resonator
 update_readout_length(readout_len, ringdown_len)
+pprint(config)
+
 # Set the sliced demod parameters
-division_length = 10  # Size of each demodulation slice in clock cycles
+division_length = 1  # Size of each demodulation slice in clock cycles
 number_of_divisions = int(
     (readout_len + ringdown_len) / (4 * division_length)
 )  # Number of slices
@@ -145,17 +147,17 @@ with program() as opt_weights:
             "readout",
             "10",
             demod.sliced("cosine", II, division_length, "out1"),
-            # demod.sliced("sine", IQ, division_length, "out2"),
-            # demod.sliced("sine", QI, division_length, "out1"),
-            # demod.sliced("cosine", QQ, division_length, "out2"),
+            demod.sliced("sine", IQ, division_length, "out2"),
+            demod.sliced("sine", QI, division_length, "out2"),
+            demod.sliced("cosine", QQ, division_length, "out1"),
         )
         wait(thermalization_time * u.ns, "10")
-        # # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
-        # with for_(ind, 0, ind < number_of_divisions, ind + 1):
-        #     save(II[ind], II_st)
-        #     save(IQ[ind], IQ_st)
-        #     save(QI[ind], QI_st)
-        #     save(QQ[ind], QQ_st)
+        # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
+        with for_(ind, 0, ind < number_of_divisions, ind + 1):
+            save(II[ind], II_st)
+            save(IQ[ind], IQ_st)
+            save(QI[ind], QI_st)
+            save(QQ[ind], QQ_st)
 
         # align()  # Global align to play the pi pulse after thermalization
 
@@ -165,10 +167,10 @@ with program() as opt_weights:
         # measure(
         #     "readout",
         #     "10",
-        #     demod.sliced("cos", II, division_length, "out1"),
-        #     demod.sliced("sin", IQ, division_length, "out2"),
-        #     demod.sliced("minus_sin", QI, division_length, "out1"),
-        #     demod.sliced("cos", QQ, division_length, "out2"),
+        #     demod.sliced("cosine", II, division_length, "out1"),
+        #     demod.sliced("sine", IQ, division_length, "out2"),
+        #     demod.sliced("minus_sine", QI, division_length, "out1"),
+        #     demod.sliced("cosine", QQ, division_length, "out2"),
         # )
         # wait(thermalization_time * u.ns, "10")
         # # Save the sliced data (time trace of the demodulated data with a resolution equals to the division length)
@@ -180,11 +182,11 @@ with program() as opt_weights:
         # save(n, n_st)
 
     # with stream_processing():
-        # n_st.save("iteration")
-        # II_st.buffer(2 * number_of_divisions).average().save("II")
-        # IQ_st.buffer(2 * number_of_divisions).average().save("IQ")
-        # # QI_st.buffer(2 * number_of_divisions).average().save("QI")
-        # QQ_st.buffer(2 * number_of_divisions).average().save("QQ")
+    # n_st.save("iteration")
+    # II_st.buffer(2 * number_of_divisions).average().save("II")
+    # IQ_st.buffer(2 * number_of_divisions).average().save("IQ")
+    # # QI_st.buffer(2 * number_of_divisions).average().save("QI")
+    # QQ_st.buffer(2 * number_of_divisions).average().save("QQ")
 
 # #####################################
 # #  Open Communication with the QOP  #
@@ -215,6 +217,7 @@ if simulate:
     waveform_report.create_plot(
         samples, plot=True, save_path=str(Path(__file__).resolve())
     )
+    plt.show()
 else:
     # Open the quantum machine
     qm = qmm.open_qm(config)
