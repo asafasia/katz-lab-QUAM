@@ -48,9 +48,9 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
         self.frequencies = LO - (f0 + self.detunings)
 
         self.qubit.xy.operations["lorentzian"] = echo_utils.LorentzianPulse(
-            amplitude=0.001,
-            length=100,
-            tau=100,
+            amplitude=0.1,
+            length=10 * u.us,
+            tau=1 * u.us,
             axis_angle=0,
             subtracted=False,
         )
@@ -76,6 +76,8 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
 
             state_st = declare_stream()
             n_st = declare_stream()
+            I_st = declare_stream()
+            Q_st = declare_stream()
 
             # Main averaging loop
             with for_(n, 0, n < self.options.n_avg, n + 1):
@@ -83,11 +85,13 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
                     update_frequency(qubit.name, df)
                     with for_(*from_array(a, self.amplitudes)):
                         qubit_initialization(qubit, self.options)
-                        qubit.xy.play("X180", amplitude_scale=a)
+                        qubit.xy.play("lorentzian", amplitude_scale=a)
                         qubit.xy.align(resonator.name)
                         resonator.measure("readout", qua_vars=(I, Q))
                         state = discriminate(qubit, I, state)
                         save(state, state_st)
+                        save(I, I_st)
+                        save(Q, Q_st)
 
                 save(n, n_st)
 
@@ -97,6 +101,12 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
                     len(self.detunings)
                 ).average().save("state")
                 n_st.save("iteration")
+                I_st.buffer(len(self.amplitudes)).buffer(
+                    len(self.detunings)
+                ).average().save("I")
+                Q_st.buffer(len(self.amplitudes)).buffer(
+                    len(self.detunings)
+                ).average().save("Q")
 
         self.program = spec_2d
 
@@ -107,10 +117,12 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
         qm = self.qmm.open_qm(self.config)
         self.job = qm.execute(self.program)
 
-        results = fetching_tool(self.job, data_list=["state", "iteration"], mode="live")
+        results = fetching_tool(
+            self.job, data_list=["I", "Q", "state", "iteration"], mode="live"
+        )
 
         while results.is_processing():
-            state, iteration = results.fetch_all()
+            I, Q, state, iteration = results.fetch_all()
             progress_counter(
                 iteration, self.options.n_avg, start_time=results.get_start_time()
             )
@@ -122,12 +134,14 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
     # ------------------------------------------------------------------
     def analyze_results(self):
 
-        states, iteration = self.results.fetch_all()
+        I, Q, states, iteration = self.results.fetch_all()
 
         self.data["amplitudes"] = self.amplitudes
         self.data["frequencies"] = self.frequencies
         self.data["detunings"] = self.detunings
         self.data["state"] = states
+        self.data["I"] = I
+        self.data["Q"] = Q
 
         # Find maximum contrast → peak transition frequency
         idx = np.argmax(np.mean(states, axis=0))
@@ -137,13 +151,15 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
     # Plotting
     # ------------------------------------------------------------------
     def plot_results(self):
+        I = self.data["I"]
+        Q = self.data["Q"]
         states = self.data["state"]
         amps = self.data["amplitudes"]
         dets = self.data["detunings"] / 1e6  # MHz
 
-        print(states.shape)
+        print(I.shape)
 
-        plt.pcolormesh(dets, amps, states.T)
+        plt.pcolormesh(dets, amps, I.T)
         plt.xlabel("Detuning (MHz)")
         plt.ylabel("Amplitude")
         plt.title("T1 Spectroscopy 2D")
@@ -151,11 +167,12 @@ class T1Spectroscopy2DExperiment(BaseExperiment):
         plt.show()
 
     def plot_1d(self, idx):
-        states = self.data["state"]
+        I = self.data["I"]
+        Q = self.data["Q"]
         amps = self.data["amplitudes"]
         dets = self.data["detunings"] / 1e6  # MHz
 
-        plt.pcolormesh(dets, states.T[idx])
+        plt.plot(dets, I.T[idx])
         plt.xlabel("detuning")
         plt.ylabel("state")
         plt.title("T1 Spectroscopy 2D")
@@ -178,11 +195,12 @@ if __name__ == "__main__":
     qubit = "q10"
     options = OptionsT1Spectroscopy2D()
     options.n_avg = 100
-    options.active_reset = True
-
-    span = 20e6
-    detunings = np.linspace(-span / 2, span / 2, 21)
-    amps = np.linspace(0, 0.01, 10)
+    options.active_reset = False
+    options.simulate = False
+    options.simulate_duration = 10 * u.us
+    span = 200e6
+    detunings = np.linspace(-span / 2, span / 2, 101)
+    amps = np.linspace(0.1, 1, 10)
 
     experiment = T1Spectroscopy2DExperiment(
         qubit=qubit,
@@ -196,4 +214,4 @@ if __name__ == "__main__":
 
     plt.show()
 
-    experiment.plot_1d(0)
+    # experiment.plot_1d(0)

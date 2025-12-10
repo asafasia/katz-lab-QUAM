@@ -113,6 +113,9 @@ class QubitConfig:
     def T_dephasing(self) -> float:
         return None
 
+    def thremo(self):
+        return self.T1 * 6
+
 
 # ---------- Resonator Block ----------
 

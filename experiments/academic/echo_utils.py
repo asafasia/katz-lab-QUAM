@@ -33,10 +33,21 @@ class LorentzianPulse(Pulse):
         t = np.arange(-self.length / 2, self.length / 2, dtype=int)
         waveform = self.amplitude * (1 + (t / self.tau) ** 2) ** (-self.order)
 
-        if self.subtracted:
-            waveform = waveform - waveform[-1]
-
         if self.axis_angle is not None:
             waveform = waveform * np.exp(1j * self.axis_angle)
-
         return waveform
+
+    # def waveform_function(self):
+    #     t = np.arange(-self.length / 2, self.length / 2, dtype=int)
+    #     waveform = (
+    #         self.amplitude * (1 + (t / self.tau) ** 2) ** (-self.order) * 0
+    #         + self.amplitude
+    #     )
+
+    #     if self.subtracted:
+    #         waveform = waveform - waveform[-1]
+
+    #     if self.axis_angle is not None:
+    #         waveform = waveform * np.exp(1j * self.axis_angle)
+
+    #     return waveform
